@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8' })
 
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 })
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 })
     const html = await page.content()
     await browser.close()
 

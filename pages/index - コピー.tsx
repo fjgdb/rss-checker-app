@@ -12,7 +12,6 @@ export default function RSSChecker() {
   const [generatedRss, setGeneratedRss] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const [triedSelectors, setTriedSelectors] = useState<string[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false); // ← 追加
 
   const checkRSS = async () => {
     setStatus("loading");
@@ -42,17 +41,17 @@ export default function RSSChecker() {
         setMessage("このサイトには有効なRSSが見つかりませんでした。代わりにRSSを作成しますか？");
       }
     } catch (err: unknown) {
-      setStatus("error");
       if (err instanceof Error) {
+        setStatus("error");
         setMessage(`チェック中にエラーが発生しました: ${err.message}`);
       } else {
+        setStatus("error");
         setMessage("チェック中に不明なエラーが発生しました");
       }
     }
   };
 
   const generateRSS = async () => {
-    setIsGenerating(true);
     setStatus("generating");
     setGeneratedRss(null);
     setDebugInfo(null);
@@ -72,14 +71,13 @@ export default function RSSChecker() {
         setTriedSelectors(data.triedSelectors || []);
       }
     } catch (err: unknown) {
-      setStatus("error");
       if (err instanceof Error) {
+        setStatus("error");
         setMessage(`RSSの生成中にエラーが発生しました: ${err.message}`);
       } else {
+        setStatus("error");
         setMessage("RSSの生成中に不明なエラーが発生しました");
       }
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -112,16 +110,8 @@ export default function RSSChecker() {
         <Card>
           <CardContent className="p-4 space-y-2">
             <p className="text-red-600">{message}</p>
-            <Button onClick={generateRSS} variant="outline" disabled={isGenerating}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" /> 実行中...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-4 w-4" /> RSSを生成する
-                </>
-              )}
+            <Button onClick={generateRSS} variant="outline">
+              <Wand2 className="mr-2 h-4 w-4" /> RSSを生成する
             </Button>
           </CardContent>
         </Card>

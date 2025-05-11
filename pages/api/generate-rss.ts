@@ -44,7 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const browser = await puppeteer.launch({
       args: chromium.args,
-      executablePath: await chromium.executablePath(),
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? "/var/task/node_modules/@sparticuz/chromium-min/bin/chromium"
+          : await chromium.executablePath(),
       headless: chromium.headless,
     })
 

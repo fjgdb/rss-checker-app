@@ -208,9 +208,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(statusCode).json({
       error: message,
-      details: process.env.NODE_ENV === 'production' ? undefined : String(error),
+      details: String(error), // ←本番でも中身を出すよう変更
       triedSelectors: Array.from(triedSelectors),
-      debug: process.env.NODE_ENV === 'production' ? undefined : debugInfo
+      debug: debugInfo // ←こっちも
     })
   }
 }

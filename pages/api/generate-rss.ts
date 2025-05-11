@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import * as cheerio from 'cheerio'
 import puppeteer from 'puppeteer-core'
 import escape from 'xml-escape'
-import chromium from '@sparticuz/chromium-min'
+import chromium from '@sparticuz/chromium'
 
 const cache = new Map<string, { xml: string, expires: number }>()
 const CACHE_TTL = 1000 * 60 * 10 // 10分
@@ -44,10 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const browser = await puppeteer.launch({
       args: chromium.args,
-      executablePath:
-        process.env.NODE_ENV === "production"
-          ? "/var/task/node_modules/@sparticuz/chromium-min/bin/chromium"
-          : await chromium.executablePath(),
+      executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     })
 

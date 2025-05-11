@@ -215,4 +215,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       debug: debugInfo // ←こっちも
     })
   }
+  //これで何か変更したことにならんかな
 }

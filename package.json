@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "cp -r ./node_modules/@sparticuz/chromium-min/bin ./node_modules/@sparticuz/chromium-min/tmp-bin || true"
   },
   "dependencies": {
     "@sparticuz/chromium": "^133.0.0",
@@ -30,8 +31,5 @@
     "eslint-config-next": "15.3.2",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
-  "scripts": {
-  "postinstall": "cp -r ./node_modules/@sparticuz/chromium-min/bin ./node_modules/@sparticuz/chromium-min/tmp-bin || true"
   }
 }

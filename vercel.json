@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/generate-rss.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  }
+}

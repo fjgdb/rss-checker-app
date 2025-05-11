@@ -1,5 +1,5 @@
 // /pages/api/generate-rss.ts
-import type { NextApiRequest, NextApiResponse } from 'next'
+import type { Request, Response } from 'express'
 import * as cheerio from 'cheerio'
 import puppeteer from 'puppeteer-core'
 import escape from 'xml-escape'
@@ -10,7 +10,7 @@ const CACHE_TTL = 1000 * 60 * 10 // 10分
 const recentRequests = new Map<string, number>()
 const THROTTLE_WINDOW = 5000 // 5秒
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: Request, res: Response) {
   const { url, selector } = req.query
 
   if (typeof url !== 'string') {

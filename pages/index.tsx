@@ -10,7 +10,7 @@ export default function RSSChecker() {
   const [rssLink, setRssLink] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [generatedRss, setGeneratedRss] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const [triedSelectors, setTriedSelectors] = useState<string[]>([]);
 
   const checkRSS = async () => {
@@ -40,9 +40,14 @@ export default function RSSChecker() {
         setStatus("not-found");
         setMessage("このサイトには有効なRSSが見つかりませんでした。代わりにRSSを作成しますか？");
       }
-    } catch (err: any) {
-      setStatus("error");
-      setMessage(`チェック中にエラーが発生しました: ${err.message}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setStatus("error");
+        setMessage(`チェック中にエラーが発生しました: ${err.message}`);
+      } else {
+        setStatus("error");
+        setMessage("チェック中に不明なエラーが発生しました");
+      }
     }
   };
 
@@ -65,9 +70,14 @@ export default function RSSChecker() {
         setDebugInfo(data.debug || null);
         setTriedSelectors(data.triedSelectors || []);
       }
-    } catch (err: any) {
-      setStatus("error");
-      setMessage(`RSSの生成中にエラーが発生しました: ${err.message}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setStatus("error");
+        setMessage(`RSSの生成中にエラーが発生しました: ${err.message}`);
+      } else {
+        setStatus("error");
+        setMessage("RSSの生成中に不明なエラーが発生しました");
+      }
     }
   };
 
@@ -89,7 +99,7 @@ export default function RSSChecker() {
         <Card>
           <CardContent className="p-4 space-y-2">
             <p className="text-green-600 font-medium">RSSが見つかりました！</p>
-            <a href={rssLink} className="text-blue-600 underline flex items-center" target="_blank">
+            <a href={rssLink} className="text-blue-600 underline flex items-center" target="_blank" rel="noreferrer">
               <LinkIcon className="mr-2 h-4 w-4" /> {rssLink}
             </a>
           </CardContent>
@@ -111,7 +121,7 @@ export default function RSSChecker() {
         <Card>
           <CardContent className="p-4 space-y-2">
             <p className="text-green-600 font-medium">RSSを生成しました！</p>
-            <a href={generatedRss} className="text-blue-600 underline flex items-center" target="_blank">
+            <a href={generatedRss} className="text-blue-600 underline flex items-center" target="_blank" rel="noreferrer">
               <LinkIcon className="mr-2 h-4 w-4" /> {generatedRss}
             </a>
           </CardContent>

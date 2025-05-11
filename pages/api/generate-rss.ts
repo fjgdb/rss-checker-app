@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   recentRequests.set(url, now)
 
   const triedSelectors = new Set<string>()
-  const debugInfo: Record<string, any> = {}
+  const debugInfo: Record<string, unknown> = {}
 
   const cached = cache.get(url)
   if (cached && Date.now() < cached.expires) {
@@ -171,10 +171,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Content-Type', 'application/xml')
     cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
     res.status(200).send(rss)
-  } catch (err: any) {
-    const code = err?.code || ''
+
+  } catch (err: unknown) {
     let message = 'RSS生成中にエラーが発生しました'
     let statusCode = 500
+    const error = err instanceof Error ? err : new Error(String(err))
+    const code = (err as { code?: string })?.code || ''
 
     if (code === 'ETIMEDOUT') {
       message = '接続タイムアウト - サイトの応答が遅いか、接続が切断されました'
@@ -182,31 +184,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else if (code === 'ENOTFOUND') {
       message = 'DNS解決に失敗 - サイトのドメインが存在しないか、DNSサーバーに問題があります'
       statusCode = 502
-    } else if (err.message?.includes('net::ERR_NAME_NOT_RESOLVED')) {
+    } else if (error.message.includes('net::ERR_NAME_NOT_RESOLVED')) {
       message = 'サイトが見つかりません - ドメイン名が無効か、存在しない可能性があります'
       statusCode = 502
-    } else if (err.message?.includes('ERR_ABORTED')) {
+    } else if (error.message.includes('ERR_ABORTED')) {
       message = 'ページ読み込みが中断されました - サイト側でリクエストが拒否された可能性があります'
       statusCode = 503
-    } else if (err.message?.includes('ERR_FAILED')) {
+    } else if (error.message.includes('ERR_FAILED')) {
       message = 'リクエストがブロックされました - サイトがBotを検知したか、アクセス制限を設けている可能性があります'
       statusCode = 403
-    } else if (err.message?.includes('Navigation timeout')) {
+    } else if (error.message.includes('Navigation timeout')) {
       message = 'ページ読み込みがタイムアウトしました - サイトが重いか、JavaScriptの実行に時間がかかっています'
       statusCode = 504
-    } else if (err.message?.includes('Protocol error')) {
+    } else if (error.message.includes('Protocol error')) {
       message = 'プロトコルエラー - ブラウザとサイト間の通信に問題が発生しました'
       statusCode = 502
     }
 
     debugInfo.url = url
     debugInfo.timestamp = new Date().toISOString()
-    debugInfo.errorType = code || err.name
-    debugInfo.errorMessage = err.message
+    debugInfo.errorType = code || error.name
+    debugInfo.errorMessage = error.message
 
     res.status(statusCode).json({
       error: message,
-      details: process.env.NODE_ENV === 'production' ? undefined : String(err),
+      details: process.env.NODE_ENV === 'production' ? undefined : String(error),
       triedSelectors: Array.from(triedSelectors),
       debug: process.env.NODE_ENV === 'production' ? undefined : debugInfo
     })

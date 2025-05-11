@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { url } = req.query;
 
   if (!url || typeof url !== "string") {
@@ -42,7 +43,10 @@ export default async function handler(req, res) {
     // RSSタグが見つからなかった場合
     return res.status(200).json({ rss: null });
 
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return res.status(500).json({ error: error.message });
+    }
+    return res.status(500).json({ error: "不明なエラーが発生しました" });
   }
 }

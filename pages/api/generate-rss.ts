@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import * as cheerio from 'cheerio'
 import puppeteer from 'puppeteer-core'
 import escape from 'xml-escape'
-import chromium from '@sparticuz/chromium'
+import chromium from '@sparticuz/chromium-min'
 
 const cache = new Map<string, { xml: string, expires: number }>()
 const CACHE_TTL = 1000 * 60 * 10 // 10分

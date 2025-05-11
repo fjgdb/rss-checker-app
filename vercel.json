@@ -1,8 +1,1 @@
-{
-  "functions": {
-    "api/generate-rss.js": {
-      "memory": 512,
-      "maxDuration": 30
-    }
-  }
-}
+{}

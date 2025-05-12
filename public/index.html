@@ -59,8 +59,15 @@
       const url = document.getElementById('urlInput').value;
       const status = document.getElementById('status');
       const feed = document.getElementById('feed');
-      status.textContent = '取得中...';
+      status.textContent = '🧠 作業開始！';
       feed.innerHTML = '';
+
+      const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+      evtSource.onmessage = function(e) {
+        const log = document.createElement('div');
+        log.textContent = `👉 ${e.data}`;
+        feed.appendChild(log);
+      };
 
       try {
         const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
@@ -69,12 +76,14 @@
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
           if (res.ok && data.rssUrl) {
-            status.innerHTML = `✅ RSSフィードを取得しました！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
-            return; // 表示だけで完了
+            status.innerHTML = `✅ RSSフィードを発見しました！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+            evtSource.close();
+            return;
           } else {
-            const reason = data?.details || '不明なエラー';
+            const reason = data?.details || '理由不明のエラー';
             const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
             status.innerHTML = `❌ エラー: ${data?.error || '取得できませんでした'}<br>${reason}${debug}`;
+            evtSource.close();
             return;
           }
         }
@@ -85,7 +94,8 @@
         const xml = parser.parseFromString(xmlText, 'application/xml');
         const items = xml.querySelectorAll('item');
 
-        status.textContent = `RSSフィードを取得しました！ (${items.length}件)`;
+        status.textContent = `✅ RSSフィードを自動生成しました！ (${items.length}件)`;
+        evtSource.close();
 
         items.forEach(item => {
           const title = item.querySelector('title')?.textContent || '(タイトルなし)';
@@ -106,7 +116,8 @@
 
       } catch (err) {
         console.error(err);
-        status.textContent = `取得中にエラーが発生しました: ${err.message}`;
+        status.textContent = `❌ 何かが爆発しました: ${err.message}`;
+        evtSource.close();
       }
     }
   </script>

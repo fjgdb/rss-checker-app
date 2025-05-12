@@ -13,38 +13,58 @@ const THROTTLE_WINDOW = 5000 // 5秒
 const handler = async (
   req: Request<unknown, unknown, unknown, { url?: string; selector?: string }>,
   res: Response
-): Promise<Response> => {
+): Promise<void> => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.flushHeaders?.()
+
+  const sendProgress = (msg: string) => {
+    res.write(`data: ${msg}\n\n`)
+  }
+
   const { url, selector } = req.query
 
   if (typeof url !== 'string') {
-    return res.status(400).json({ error: 'Missing URL parameter' })
+    sendProgress('🧯 URLが見当たらないぞ、隊長！')
+    res.end()
+    return
   }
 
   try {
     const parsed = new URL(url)
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return res.status(400).json({ error: '無効なプロトコル' })
+      sendProgress('🧯 通信プロトコルが謎の呪文です')
+      res.end()
+      return
     }
   } catch {
-    return res.status(400).json({ error: '無効なURL形式' })
+    sendProgress('💥 URLの呪文が不完全です…召喚失敗！')
+    res.end()
+    return
   }
 
   const now = Date.now()
   if (recentRequests.has(url) && now - recentRequests.get(url)! < THROTTLE_WINDOW) {
-    return res.status(429).json({ error: 'リクエストが多すぎます。少し待ってください。' })
+    sendProgress('🕒 ちょっと待って！ 連打しすぎ注意報！')
+    res.end()
+    return
   }
   recentRequests.set(url, now)
 
   const cached = cache.get(url)
   if (cached && Date.now() < cached.expires) {
-    res.setHeader('Content-Type', 'application/xml')
-    return res.status(200).send(cached.xml)
+    sendProgress('📦 キャッシュから魔法の巻物を召喚！')
+    res.write(`data: ${cached.xml}\n\n`)
+    res.end()
+    return
   }
 
-  const debugInfo: Record<string, unknown> = {}
   const triedSelectors = new Set<string>()
+  const debugInfo: Record<string, unknown> = {}
 
   try {
+    sendProgress('🚀 ポータル開放中...')
     const browser = await puppeteer.launch({
       args: chromium.args,
       executablePath: await chromium.executablePath(),
@@ -52,8 +72,10 @@ const handler = async (
     })
 
     const page = await browser.newPage()
+    sendProgress('👁️‍🗨️ サイトを覗き見中...')
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8' })
+
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
     const html = await page.content()
     await browser.close()
@@ -65,6 +87,7 @@ const handler = async (
 
     if (rssLink) {
       const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
+      sendProgress('📡 既存のRSSフィードを発見！リンクを転送中...')
 
       try {
         const rssResponse = await fetch(absoluteRss, {
@@ -80,16 +103,18 @@ const handler = async (
         const rssText = await rssResponse.text()
         cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
 
-        // ここを json に変更（文字列を返すときは send() ではなく json()）
-        return res.status(200).json({ rssUrl: absoluteRss })
+        sendProgress(`✅ フィードURL: ${absoluteRss}`)
+        res.end()
+        return
 
       } catch (fetchErr) {
-        // RSS取得に失敗した場合、何もせず次の自動生成処理へスルー
+        sendProgress('⚠️ RSSの呼び出しに失敗…次なる手段へ！')
         debugInfo.fetchRssError = (fetchErr instanceof Error ? fetchErr.message : String(fetchErr))
       }
     }
 
-    const hostname = new URL(url).hostname
+    sendProgress('🛠️ フィードが無い？よし、手作業で錬成だ！')
+
     const fallbackSelectors = [
       'article a',
       'h2 a',
@@ -112,6 +137,7 @@ const handler = async (
       : fallbackSelectors
 
     const itemMap = new Map<string, { title: string, description: string, image?: string }>()
+    sendProgress('🔍 記事を探して草むらをガサゴソ…')
 
     for (const sel of selectors) {
       triedSelectors.add(sel)
@@ -137,36 +163,12 @@ const handler = async (
     }
 
     if (itemMap.size === 0) {
-      $('a[href]').each((_, el) => {
-        const href = $(el).attr('href')
-        const title = $(el).text().trim()
-        const image = $(el).find('img').attr('src') || $(el).closest('article').find('img').attr('src') || ''
-
-        if (!href || !title || title.length < 10) return
-
-        const absLink = href.startsWith('http') ? href : new URL(href, url).href
-
-        if (
-          href.match(/\/(20\d{2}|\d{6})\//) ||
-          href.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//) ||
-          href.includes('/news/') ||
-          href.includes('/article/') ||
-          href.includes('/202')
-        ) {
-          if (!itemMap.has(absLink)) {
-            itemMap.set(absLink, { title, description: '', image })
-          }
-        }
-      })
+      sendProgress('😢 記事が全然見つかりませんでした…')
+      res.end()
+      return
     }
 
-    if (itemMap.size === 0) {
-      return res.status(404).json({
-        error: '記事が見つかりませんでした',
-        triedSelectors: Array.from(triedSelectors),
-        debugInfo
-      })
-    }
+    sendProgress(`📦 ${itemMap.size}件の記事を収納中...`)
 
     const rssItems = Array.from(itemMap.entries()).slice(0, 10).map(([link, data]) => `
       <item>
@@ -188,29 +190,17 @@ const handler = async (
         </channel>
       </rss>`
 
-    res.setHeader('Content-Type', 'application/xml')
     const apiUrl = req.originalUrl.split('?')[0]
     const generatedUrl = `${req.protocol}://${req.get('host')}${apiUrl}?url=${encodeURIComponent(url)}`
-
     cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
 
-    // return XML → return JSON with URL
-    return res.status(200).json({ rssUrl: generatedUrl })
+    sendProgress(`✅ RSSを自作しました！リンクはこちら：${generatedUrl}`)
+    res.end()
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err))
-    const code = (err as { code?: string })?.code || ''
-    debugInfo.url = url
-    debugInfo.timestamp = new Date().toISOString()
-    debugInfo.errorType = code || error.name
-    debugInfo.errorMessage = error.message
-
-    return res.status(500).json({
-      error: 'RSS生成中にエラーが発生しました',
-      details: error.message,
-      triedSelectors: Array.from(triedSelectors),
-      debug: debugInfo
-    })
+    sendProgress(`💥 処理中に事故発生: ${error.message}`)
+    res.end()
   }
 }
 

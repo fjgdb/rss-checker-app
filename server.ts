@@ -1,12 +1,12 @@
 // server.ts
 import express from "express";
-import generateRSS from './src/generate-rss'
-app.get('/api/generate-rss', (req, res) => generateRSS(req, res));
+import generateRSS from './src/generate-rss';
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.get("/api/generate-rss", generateRSS);
+app.get('/api/generate-rss', (req, res) => generateRSS(req, res));
+
+const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

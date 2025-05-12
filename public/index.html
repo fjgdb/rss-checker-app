@@ -66,21 +66,25 @@
         const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
         const contentType = res.headers.get('content-type');
 
-        const data = await res.json();
-        if (data.rssUrl) {
-          document.getElementById('result').innerHTML =
-            `<p>RSSフィードが見つかりました：</p><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
-        } else if (data.error) {
-          document.getElementById('result').innerHTML =
-            `<p style="color:red;">エラー: ${data.error}</p>`;
-        } else {
-          document.getElementById('result').innerHTML =
-            `<p>RSSは見つかりませんでした。</p>`;
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (res.ok && data.rssUrl) {
+            status.innerHTML = `✅ RSSフィードを取得しました！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+            return; // 表示だけで完了
+          } else {
+            const reason = data?.details || '不明なエラー';
+            const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
+            status.innerHTML = `❌ エラー: ${data?.error || '取得できませんでした'}<br>${reason}${debug}`;
+            return;
+          }
         }
 
+        // RSS(XML) を直接返されたとき（生成されたフィード）
+        const xmlText = await res.text();
         const parser = new DOMParser();
-        const xml = parser.parseFromString(text, 'application/xml');
+        const xml = parser.parseFromString(xmlText, 'application/xml');
         const items = xml.querySelectorAll('item');
+
         status.textContent = `RSSフィードを取得しました！ (${items.length}件)`;
 
         items.forEach(item => {
@@ -102,7 +106,7 @@
 
       } catch (err) {
         console.error(err);
-        status.textContent = '取得中にエラーが発生しました';
+        status.textContent = `取得中にエラーが発生しました: ${err.message}`;
       }
     }
   </script>

@@ -1,5 +1,5 @@
 // /pages/api/generate-rss.ts
-import type { Request, Response } from 'express'
+import type { Request, Response, RequestHandler } from 'express'
 import * as cheerio from 'cheerio'
 import puppeteer from 'puppeteer-core'
 import escape from 'xml-escape'
@@ -10,9 +10,11 @@ const CACHE_TTL = 1000 * 60 * 10 // 10分
 const recentRequests = new Map<string, number>()
 const THROTTLE_WINDOW = 5000 // 5秒
 
-const handler = async (req: Request<{},{},{},{ url?: string, selector?: string }>, res: Response) => {
-  const url = req.query.url as string;
-  const selector = req.query.selector as string;
+const handler = async (
+  req: Request<unknown, unknown, unknown, { url?: string; selector?: string }>,
+  res: Response
+): Promise<void> => {
+  const { url, selector } = req.query;
 
   if (typeof url !== 'string') {
     return res.status(400).json({ error: 'Missing URL parameter' })

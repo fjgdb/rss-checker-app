@@ -219,11 +219,6 @@ const handler = async (
     })
   }
 }
-const handler = async (
-  req: Request<unknown, unknown, unknown, { url?: string; selector?: string }>,
-  res: Response
-): Promise<void> => {
-  // ...
-};
+
 
 export default handler;

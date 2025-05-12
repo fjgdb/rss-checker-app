@@ -10,8 +10,9 @@ const CACHE_TTL = 1000 * 60 * 10 // 10分
 const recentRequests = new Map<string, number>()
 const THROTTLE_WINDOW = 5000 // 5秒
 
-export default async function handler(req: Request, res: Response) {
-  const { url, selector } = req.query
+const handler = async (req: Request<{},{},{},{ url?: string, selector?: string }>, res: Response) => {
+  const url = req.query.url as string;
+  const selector = req.query.selector as string;
 
   if (typeof url !== 'string') {
     return res.status(400).json({ error: 'Missing URL parameter' })
@@ -215,5 +216,5 @@ export default async function handler(req: Request, res: Response) {
       debug: debugInfo // ←こっちも
     })
   }
-  //これで何か変更したことにならんかな
 }
+export default handler;

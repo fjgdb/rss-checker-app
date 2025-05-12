@@ -1,6 +1,6 @@
 // server.ts
 import express from "express";
-import generateRSS from "./pages/api/generate-rss";
+import generateRSS from './src/generate-rss';
 
 const app = express();
 const port = process.env.PORT || 3000;

@@ -13,7 +13,7 @@ const THROTTLE_WINDOW = 5000 // 5秒
 const handler = async (
   req: Request<unknown, unknown, unknown, { url?: string; selector?: string }>,
   res: Response
-): Promise<void> => {
+): Promise<Response> => {
   const { url, selector } = req.query
 
   if (typeof url !== 'string') {

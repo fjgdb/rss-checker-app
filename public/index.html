@@ -23,6 +23,7 @@
     }
     #status {
       margin-top: 1rem;
+      white-space: pre-line;
     }
     #feed {
       margin-top: 2rem;
@@ -51,7 +52,7 @@
   <h1>RSSチェッカー</h1>
   <input id="urlInput" type="text" placeholder="https://example.com" />
   <button onclick="checkRSS()">チェック</button>
-  <div id="status"></div>
+  <div id="status">🧠 作業開始！</div>
   <div id="feed"></div>
 
   <script>
@@ -64,43 +65,47 @@
 
       const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
       evtSource.onmessage = function(e) {
-        const log = document.createElement('div');
-        log.textContent = `👉 ${e.data}`;
-        feed.appendChild(log);
+        status.textContent += `\n👉 ${e.data}`;
       };
 
       try {
+        // wait a bit to allow SSE logs to show before fetch
+        await new Promise(r => setTimeout(r, 500));
+
         const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
         const contentType = res.headers.get('content-type');
 
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
           if (res.ok && data.rssUrl) {
-            status.innerHTML = `✅ RSSフィードを発見しました！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+            status.innerHTML += `\n✅ RSSフィードを発見しました！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
             evtSource.close();
             return;
           } else {
             const reason = data?.details || '理由不明のエラー';
             const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
-            status.innerHTML = `❌ エラー: ${data?.error || '取得できませんでした'}<br>${reason}${debug}`;
+            status.innerHTML += `\n❌ エラー: ${data?.error || '取得できませんでした'}<br>${reason}${debug}`;
             evtSource.close();
             return;
           }
         }
 
-        // RSS(XML) を直接返されたとき（生成されたフィード）
         const xmlText = await res.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, 'application/xml');
-        const items = xml.querySelectorAll('item');
 
-        status.textContent = `✅ RSSフィードを自動生成しました！ (${items.length}件)`;
+        const items = xml.querySelectorAll('item');
+        const entries = xml.querySelectorAll('entry');
+        const allItems = items.length > 0 ? items : entries;
+
+        status.textContent += `\n✅ RSSフィードを自動生成しました！ (${allItems.length}件)`;
         evtSource.close();
 
-        items.forEach(item => {
+        allItems.forEach(item => {
           const title = item.querySelector('title')?.textContent || '(タイトルなし)';
           const link = item.querySelector('link')?.textContent || '#';
-          const description = item.querySelector('description')?.textContent || '';
+          const description = item.querySelector('description')?.textContent ||
+                              item.querySelector('summary')?.textContent || '';
           const enclosure = item.querySelector('enclosure');
           const imageUrl = enclosure?.getAttribute('url');
 
@@ -116,7 +121,7 @@
 
       } catch (err) {
         console.error(err);
-        status.textContent = `❌ 何かが爆発しました: ${err.message}`;
+        status.textContent += `\n❌ 何かが爆発しました: ${err.message}`;
         evtSource.close();
       }
     }

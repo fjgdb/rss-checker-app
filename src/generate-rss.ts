@@ -65,16 +65,6 @@ const handler = async (
 
     if (rssLink) {
       const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-      const rssResponse = await fetch(absoluteRss, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0',
-          'Accept': 'application/rss+xml,application/xml',
-        },
-        redirect: 'follow',
-      })
-      const rssText = await rssResponse.text()
-      res.setHeader('Content-Type', 'application/xml')
-      cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
       return res.status(200).json({ rssUrl: absoluteRss });
     }
 

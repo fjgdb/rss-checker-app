@@ -66,17 +66,16 @@
         const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
         const contentType = res.headers.get('content-type');
 
-        if (res.ok) {
-          if (contentType && contentType.includes('application/json')) {
-            const data = await res.json();
-            if (data.rssUrl) {
-              msg.innerHTML = `RSSフィードURLを取得しました：<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
-            } else {
-              msg.textContent = 'RSS URLが見つかりませんでした。';
-            }
-          } else {
-            msg.textContent = '想定外のレスポンス形式です。';
-          }
+        const data = await res.json();
+        if (data.rssUrl) {
+          document.getElementById('result').innerHTML =
+            `<p>RSSフィードが見つかりました：</p><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+        } else if (data.error) {
+          document.getElementById('result').innerHTML =
+            `<p style="color:red;">エラー: ${data.error}</p>`;
+        } else {
+          document.getElementById('result').innerHTML =
+            `<p>RSSは見つかりませんでした。</p>`;
         }
 
         const parser = new DOMParser();

@@ -1,0 +1,24 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>RSS Checker</title>
+</head>
+<body>
+  <h1>📰 RSS Checker</h1>
+  <form action="/api/generate-rss" method="get">
+    <label>
+      対象URL：
+      <input type="url" name="url" placeholder="https://example.com" required />
+    </label>
+    <br />
+    <label>
+      セレクタ（任意）：
+      <input type="text" name="selector" placeholder=".article a" />
+    </label>
+    <br />
+    <button type="submit">RSSを生成</button>
+  </form>
+</body>
+</html>

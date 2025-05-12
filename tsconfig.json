@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["server.ts", "pages/**/*.ts", "src/generate-rss.ts"],
+  "include": ["server.ts", "pages/**/*.ts", "src/generate-rss.ts", "public/**/*"],
   "exclude": ["node_modules"]
 }

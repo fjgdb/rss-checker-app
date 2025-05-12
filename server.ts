@@ -4,6 +4,9 @@ import generateRSS from './src/generate-rss';
 
 const app = express();
 
+// public フォルダを静的ファイルとして提供
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/api/generate-rss', (req, res) => {
   generateRSS(req, res).catch((err) => {
     console.error("Unhandled error in generateRSS:", err);

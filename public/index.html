@@ -1,24 +1,85 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>RSS Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RSSチェッカー</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-left: 0.5rem;
+    }
+    .result {
+      margin-top: 1rem;
+    }
+    .loading {
+      color: #888;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
-  <h1>📰 RSS Checker</h1>
-  <form action="/api/generate-rss" method="get">
-    <label>
-      対象URL：
-      <input type="url" name="url" placeholder="https://example.com" required />
-    </label>
-    <br />
-    <label>
-      セレクタ（任意）：
-      <input type="text" name="selector" placeholder=".article a" />
-    </label>
-    <br />
-    <button type="submit">RSSを生成</button>
-  </form>
+  <h1>RSSチェッカー</h1>
+  <input type="text" id="urlInput" placeholder="https://example.com" size="40"/>
+  <button id="checkBtn">チェック</button>
+  <div class="result" id="result"></div>
+
+  <script>
+    const checkBtn = document.getElementById("checkBtn");
+    const resultDiv = document.getElementById("result");
+
+    checkBtn.addEventListener("click", async () => {
+      const url = document.getElementById("urlInput").value.trim();
+      if (!url) return;
+
+      resultDiv.innerHTML = '<p class="loading">RSSを確認中...</p>';
+
+      try {
+        const response = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+        const contentType = response.headers.get('Content-Type');
+
+        if (response.ok && contentType.includes('application/xml')) {
+          const text = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(text, "text/xml");
+          const items = Array.from(doc.querySelectorAll("item"));
+
+          const list = items.map(item => {
+            const title = item.querySelector("title")?.textContent || "(タイトルなし)";
+            const link = item.querySelector("link")?.textContent || "#";
+            return `<li><a href="${link}" target="_blank" rel="noreferrer">${title}</a></li>`;
+          }).join("");
+
+          resultDiv.innerHTML = `
+            <p class="success">RSSフィードを取得しました！</p>
+            <ul>${list}</ul>
+          `;
+        } else {
+          const data = await response.json();
+          resultDiv.innerHTML = `
+            <p class="error">エラー: ${data.error || 'RSSが見つかりませんでした'}</p>
+            ${data.triedSelectors ? `<p>試したセレクタ: ${data.triedSelectors.join(", ")}</p>` : ''}
+          `;
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="error">通信エラー: ${err.message}</p>`;
+      }
+    });
+  </script>
 </body>
 </html>

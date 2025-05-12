@@ -1,5 +1,5 @@
-// /pages/api/generate-rss.ts
-import type { Request, Response, RequestHandler } from 'express'
+// /src/generate-rss.ts
+import type { Request, Response } from 'express'
 import * as cheerio from 'cheerio'
 import puppeteer from 'puppeteer-core'
 import escape from 'xml-escape'
@@ -13,8 +13,8 @@ const THROTTLE_WINDOW = 5000 // 5秒
 const handler = async (
   req: Request<unknown, unknown, unknown, { url?: string; selector?: string }>,
   res: Response
-): Promise<Response<any> | void> => {
-  const { url, selector } = req.query;
+): Promise<void> => {
+  const { url, selector } = req.query
 
   if (typeof url !== 'string') {
     return res.status(400).json({ error: 'Missing URL parameter' })
@@ -35,14 +35,14 @@ const handler = async (
   }
   recentRequests.set(url, now)
 
-  const triedSelectors = new Set<string>()
-  const debugInfo: Record<string, unknown> = {}
-
   const cached = cache.get(url)
   if (cached && Date.now() < cached.expires) {
     res.setHeader('Content-Type', 'application/xml')
     return res.status(200).send(cached.xml)
   }
+
+  const debugInfo: Record<string, unknown> = {}
+  const triedSelectors = new Set<string>()
 
   try {
     const browser = await puppeteer.launch({
@@ -50,12 +50,10 @@ const handler = async (
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     })
-
     const page = await browser.newPage()
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8' })
-
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 })
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
     const html = await page.content()
     await browser.close()
 
@@ -65,17 +63,31 @@ const handler = async (
                     $('link[type="application/atom+xml"]').attr('href')
 
     if (rssLink) {
-      const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-      const rssResponse = await fetch(absoluteRss, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-          'Accept': 'application/rss+xml,application/xml'
-        },
-        redirect: 'follow'
-      })
-      const rssText = await rssResponse.text()
-      res.setHeader('Content-Type', 'application/xml')
-      return res.status(200).send(rssText)
+      try {
+        const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
+
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+        const rssResponse = await fetch(absoluteRss, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/rss+xml,application/xml',
+          },
+          redirect: 'follow',
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        const rssText = await rssResponse.text()
+        res.setHeader('Content-Type', 'application/xml')
+        cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
+        return res.status(200).send(rssText)
+      } catch (fetchErr) {
+        debugInfo.rssLinkError = (fetchErr as Error).message || fetchErr
+        // 続行してHTMLからRSSを生成
+      }
     }
 
     const hostname = new URL(url).hostname
@@ -150,7 +162,11 @@ const handler = async (
     }
 
     if (itemMap.size === 0) {
-      return res.status(404).json({ error: '記事が見つかりませんでした', triedSelectors: Array.from(triedSelectors), debugInfo })
+      return res.status(404).json({
+        error: '記事が見つかりませんでした',
+        triedSelectors: Array.from(triedSelectors),
+        debugInfo,
+      })
     }
 
     const rssItems = Array.from(itemMap.entries()).slice(0, 10).map(([link, data]) => `
@@ -178,47 +194,20 @@ const handler = async (
     res.status(200).send(rss)
 
   } catch (err: unknown) {
-    let message = 'RSS生成中にエラーが発生しました'
-    let statusCode = 500
     const error = err instanceof Error ? err : new Error(String(err))
     const code = (err as { code?: string })?.code || ''
-
-    if (code === 'ETIMEDOUT') {
-      message = '接続タイムアウト - サイトの応答が遅いか、接続が切断されました'
-      statusCode = 504
-    } else if (code === 'ENOTFOUND') {
-      message = 'DNS解決に失敗 - サイトのドメインが存在しないか、DNSサーバーに問題があります'
-      statusCode = 502
-    } else if (error.message.includes('net::ERR_NAME_NOT_RESOLVED')) {
-      message = 'サイトが見つかりません - ドメイン名が無効か、存在しない可能性があります'
-      statusCode = 502
-    } else if (error.message.includes('ERR_ABORTED')) {
-      message = 'ページ読み込みが中断されました - サイト側でリクエストが拒否された可能性があります'
-      statusCode = 503
-    } else if (error.message.includes('ERR_FAILED')) {
-      message = 'リクエストがブロックされました - サイトがBotを検知したか、アクセス制限を設けている可能性があります'
-      statusCode = 403
-    } else if (error.message.includes('Navigation timeout')) {
-      message = 'ページ読み込みがタイムアウトしました - サイトが重いか、JavaScriptの実行に時間がかかっています'
-      statusCode = 504
-    } else if (error.message.includes('Protocol error')) {
-      message = 'プロトコルエラー - ブラウザとサイト間の通信に問題が発生しました'
-      statusCode = 502
-    }
-
     debugInfo.url = url
     debugInfo.timestamp = new Date().toISOString()
     debugInfo.errorType = code || error.name
     debugInfo.errorMessage = error.message
 
-    res.status(statusCode).json({
-      error: message,
-      details: String(error), // ←本番でも中身を出すよう変更
+    res.status(500).json({
+      error: 'RSS生成中にエラーが発生しました',
+      details: error.message,
       triedSelectors: Array.from(triedSelectors),
-      debug: debugInfo // ←こっちも
+      debug: debugInfo
     })
   }
 }
 
-
-export default handler;
+export default handler

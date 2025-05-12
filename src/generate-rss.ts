@@ -50,6 +50,7 @@ const handler = async (
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     })
+
     const page = await browser.newPage()
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8' })
@@ -63,31 +64,18 @@ const handler = async (
                     $('link[type="application/atom+xml"]').attr('href')
 
     if (rssLink) {
-      try {
-        const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 8000)
-
-        const rssResponse = await fetch(absoluteRss, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0',
-            'Accept': 'application/rss+xml,application/xml',
-          },
-          redirect: 'follow',
-          signal: controller.signal,
-        })
-
-        clearTimeout(timeoutId)
-
-        const rssText = await rssResponse.text()
-        res.setHeader('Content-Type', 'application/xml')
-        cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
-        return res.status(200).send(rssText)
-      } catch (fetchErr) {
-        debugInfo.rssLinkError = (fetchErr as Error).message || fetchErr
-        // 続行してHTMLからRSSを生成
-      }
+      const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
+      const rssResponse = await fetch(absoluteRss, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          'Accept': 'application/rss+xml,application/xml',
+        },
+        redirect: 'follow',
+      })
+      const rssText = await rssResponse.text()
+      res.setHeader('Content-Type', 'application/xml')
+      cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
+      return res.status(200).send(rssText)
     }
 
     const hostname = new URL(url).hostname
@@ -165,7 +153,7 @@ const handler = async (
       return res.status(404).json({
         error: '記事が見つかりませんでした',
         triedSelectors: Array.from(triedSelectors),
-        debugInfo,
+        debugInfo
       })
     }
 
@@ -191,7 +179,7 @@ const handler = async (
 
     res.setHeader('Content-Type', 'application/xml')
     cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
-    res.status(200).send(rss)
+    return res.status(200).send(rss)
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err))
@@ -201,7 +189,7 @@ const handler = async (
     debugInfo.errorType = code || error.name
     debugInfo.errorMessage = error.message
 
-    res.status(500).json({
+    return res.status(500).json({
       error: 'RSS生成中にエラーが発生しました',
       details: error.message,
       triedSelectors: Array.from(triedSelectors),

@@ -20,13 +20,17 @@ const handler = async (
   res.flushHeaders?.()
 
   const sendProgress = (msg: string) => {
-    res.write(`data: ${msg}\n\n`)
-  }
+    res.write(`data: ${msg}\n\n`);
+    if (typeof (res as any).flush === 'function') {
+       (res as any).flush();
+    }
+  };
 
   const { url, selector } = req.query
 
   if (typeof url !== 'string') {
     sendProgress('🧯 URLが見当たらないぞ、隊長！')
+    sendProgress('[SSE-END]')
     res.end()
     return
   }
@@ -35,11 +39,13 @@ const handler = async (
     const parsed = new URL(url)
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       sendProgress('🧯 通信プロトコルが謎の呪文です')
+      sendProgress('[SSE-END]')
       res.end()
       return
     }
   } catch {
     sendProgress('💥 URLの呪文が不完全です…召喚失敗！')
+    sendProgress('[SSE-END]')
     res.end()
     return
   }
@@ -47,6 +53,7 @@ const handler = async (
   const now = Date.now()
   if (recentRequests.has(url) && now - recentRequests.get(url)! < THROTTLE_WINDOW) {
     sendProgress('🕒 ちょっと待って！ 連打しすぎ注意報！')
+    sendProgress('[SSE-END]')
     res.end()
     return
   }
@@ -56,10 +63,14 @@ const handler = async (
   if (cached && Date.now() < cached.expires) {
     sendProgress('📦 キャッシュから魔法の巻物を召喚！')
     res.write(`data: ${cached.xml}\n\n`)
+    ;if (typeof (res as any).flush === 'function') {
+      (res as any).flush();
+     }
+
+    sendProgress('[SSE-END]')
     res.end()
     return
   }
-
   const triedSelectors = new Set<string>()
   const debugInfo: Record<string, unknown> = {}
 
@@ -104,6 +115,7 @@ const handler = async (
         cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
 
         sendProgress(`✅ フィードURL: ${absoluteRss}`)
+        sendProgress('[SSE-END]')
         res.end()
         return
 
@@ -164,6 +176,7 @@ const handler = async (
 
     if (itemMap.size === 0) {
       sendProgress('😢 記事が全然見つかりませんでした…')
+      sendProgress('[SSE-END]')
       res.end()
       return
     }
@@ -195,11 +208,13 @@ const handler = async (
     cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
 
     sendProgress(`✅ RSSを自作しました！リンクはこちら：${generatedUrl}`)
+    sendProgress('[SSE-END]')
     res.end()
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err))
     sendProgress(`💥 処理中に事故発生: ${error.message}`)
+    sendProgress('[SSE-END]')
     res.end()
   }
 }

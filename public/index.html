@@ -63,33 +63,52 @@
       status.textContent = '🧠 作業開始！';
       feed.innerHTML = '';
 
+      // SSE開始
       const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-      evtSource.onmessage = function(e) {
-        status.textContent += `\n👉 ${e.data}`;
-      };
+
+      const endSignal = '[SSE-END]';
+      const sseMessages = [];
+
+      const waitForSSEEnd = new Promise((resolve, reject) => {
+        evtSource.onmessage = (e) => {
+          if (e.data === endSignal) {
+            evtSource.close();
+            resolve();
+          } else {
+            sseMessages.push(e.data);
+            status.textContent += `\n👉 ${e.data}`;
+          }
+        };
+
+        evtSource.onerror = (err) => {
+          console.error('SSE error:', err);
+          status.textContent += '\n⚠️ SSE接続に問題が発生しました。';
+          evtSource.close();
+          resolve(); // 明示的に進める（fetch()はとにかく試す）
+        };
+      });
+
+      // SSE完了まで待ってから fetch
+      await waitForSSEEnd;
 
       try {
-        // wait a bit to allow SSE logs to show before fetch
-        await new Promise(r => setTimeout(r, 500));
-
         const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
         const contentType = res.headers.get('content-type');
 
-        if (contentType && contentType.includes('application/json')) {
+        if (contentType?.includes('application/json')) {
           const data = await res.json();
           if (res.ok && data.rssUrl) {
             status.innerHTML += `\n✅ RSSフィードを発見しました！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
-            evtSource.close();
             return;
           } else {
             const reason = data?.details || '理由不明のエラー';
             const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
-            status.innerHTML += `\n❌ エラー: ${data?.error || '取得できませんでした'}<br>${reason}${debug}`;
-            evtSource.close();
+            status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 情報探索に失敗！'}<br>${reason}${debug}`;
             return;
           }
         }
 
+        // XMLとして受信されたとき（生成RSS）
         const xmlText = await res.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, 'application/xml');
@@ -98,14 +117,12 @@
         const entries = xml.querySelectorAll('entry');
         const allItems = items.length > 0 ? items : entries;
 
-        status.textContent += `\n✅ RSSフィードを自動生成しました！ (${allItems.length}件)`;
-        evtSource.close();
+        status.textContent += `\n🧪 原材料：HTML、生成物：RSS (${allItems.length}件)`;
 
         allItems.forEach(item => {
           const title = item.querySelector('title')?.textContent || '(タイトルなし)';
           const link = item.querySelector('link')?.textContent || '#';
-          const description = item.querySelector('description')?.textContent ||
-                              item.querySelector('summary')?.textContent || '';
+          const description = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
           const enclosure = item.querySelector('enclosure');
           const imageUrl = enclosure?.getAttribute('url');
 
@@ -122,7 +139,6 @@
       } catch (err) {
         console.error(err);
         status.textContent += `\n❌ 何かが爆発しました: ${err.message}`;
-        evtSource.close();
       }
     }
   </script>

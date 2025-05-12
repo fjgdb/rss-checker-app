@@ -4,7 +4,7 @@ import generateRSS from './src/generate-rss';
 
 const app = express();
 
-app.get('/api/generate-rss', (req, res) => 
+app.get('/api/generate-rss', (req, res) => {
   generateRSS(req, res).catch((err) => {
     console.error("Unhandled error in generateRSS:", err);
     res.status(500).json({ error: "Internal Server Error" });

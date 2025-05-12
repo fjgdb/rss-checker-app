@@ -75,7 +75,7 @@ const handler = async (
       const rssText = await rssResponse.text()
       res.setHeader('Content-Type', 'application/xml')
       cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
-      return res.status(200).send(rssText)
+      return res.status(200).json({ rssUrl: absoluteRss });
     }
 
     const hostname = new URL(url).hostname

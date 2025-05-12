@@ -65,30 +65,51 @@ const handler = async (
 
     if (rssLink) {
       const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-      return res.status(200).json({ rssUrl: absoluteRss });
+
+      try {
+        const rssResponse = await fetch(absoluteRss, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/rss+xml,application/xml',
+          },
+          redirect: 'follow',
+        })
+
+        if (!rssResponse.ok) throw new Error(`RSS fetch failed with status ${rssResponse.status}`)
+
+        const rssText = await rssResponse.text()
+        cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
+
+        // ここを json に変更（文字列を返すときは send() ではなく json()）
+        return res.status(200).json({ rssUrl: absoluteRss })
+
+      } catch (fetchErr) {
+        // RSS取得に失敗した場合、何もせず次の自動生成処理へスルー
+        debugInfo.fetchRssError = (fetchErr instanceof Error ? fetchErr.message : String(fetchErr))
+      }
     }
 
     const hostname = new URL(url).hostname
-    const siteSelectors: Record<string, string[]> = {
-      'www.huffingtonpost.jp': ['.headline a', '.newsList__title a'],
-      'www3.nhk.or.jp': ['.content--summary a'],
-      'www.bbc.com': ['.media__title a'],
-      'natgeo.nikkeibp.co.jp': ['.article-list a', '.article__title a', '.articleList a', '.article-card a']
-    }
-
     const fallbackSelectors = [
-      '.content--summary a',
       'article a',
       'h2 a',
       'h3 a',
       '.entry-title a',
       '.post-title a',
-      'a.headline'
+      '.headline a',
+      '.news-title a',
+      '.title a',
+      '.card-title a',
+      '.story a',
+      '.story-link a',
+      'a[href*="/article/"]',
+      'a[href*="/news/"]',
+      'a[href*="/story/"]'
     ]
 
     const selectors = typeof selector === 'string'
       ? [selector]
-      : siteSelectors[hostname] || fallbackSelectors
+      : fallbackSelectors
 
     const itemMap = new Map<string, { title: string, description: string, image?: string }>()
 
@@ -168,8 +189,13 @@ const handler = async (
       </rss>`
 
     res.setHeader('Content-Type', 'application/xml')
+    const apiUrl = req.originalUrl.split('?')[0]
+    const generatedUrl = `${req.protocol}://${req.get('host')}${apiUrl}?url=${encodeURIComponent(url)}`
+
     cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
-    return res.status(200).send(rss)
+
+    // return XML → return JSON with URL
+    return res.status(200).json({ rssUrl: generatedUrl })
 
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err))

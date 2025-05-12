@@ -7,79 +7,98 @@
   <style>
     body {
       font-family: sans-serif;
+      padding: 2rem;
       max-width: 600px;
-      margin: 2rem auto;
-      padding: 1rem;
+      margin: auto;
     }
-    input, button {
+    input {
+      width: 80%;
       padding: 0.5rem;
       font-size: 1rem;
     }
     button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
       margin-left: 0.5rem;
     }
-    .result {
+    #status {
       margin-top: 1rem;
     }
-    .loading {
-      color: #888;
+    #feed {
+      margin-top: 2rem;
+      border-top: 1px solid #ccc;
+      padding-top: 1rem;
     }
-    .success {
-      color: green;
+    .item {
+      margin-bottom: 1rem;
     }
-    .error {
-      color: red;
-      white-space: pre-wrap;
+    .item-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .item-desc {
+      margin: 0.3rem 0;
+      color: #444;
+    }
+    .item img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 0.3rem;
     }
   </style>
 </head>
 <body>
   <h1>RSSチェッカー</h1>
-  <input type="text" id="urlInput" placeholder="https://example.com" size="40"/>
-  <button id="checkBtn">チェック</button>
-  <div class="result" id="result"></div>
+  <input id="urlInput" type="text" placeholder="https://example.com" />
+  <button onclick="checkRSS()">チェック</button>
+  <div id="status"></div>
+  <div id="feed"></div>
 
   <script>
-    const checkBtn = document.getElementById("checkBtn");
-    const resultDiv = document.getElementById("result");
-
-    checkBtn.addEventListener("click", async () => {
-      const url = document.getElementById("urlInput").value.trim();
-      if (!url) return;
-
-      resultDiv.innerHTML = '<p class="loading">RSSを確認中...</p>';
+    async function checkRSS() {
+      const url = document.getElementById('urlInput').value;
+      const status = document.getElementById('status');
+      const feed = document.getElementById('feed');
+      status.textContent = '取得中...';
+      feed.innerHTML = '';
 
       try {
-        const response = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-        const contentType = response.headers.get('Content-Type');
+        const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+        const text = await res.text();
 
-        if (response.ok && contentType.includes('application/xml')) {
-          const text = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(text, "text/xml");
-          const items = Array.from(doc.querySelectorAll("item"));
-
-          const list = items.map(item => {
-            const title = item.querySelector("title")?.textContent || "(タイトルなし)";
-            const link = item.querySelector("link")?.textContent || "#";
-            return `<li><a href="${link}" target="_blank" rel="noreferrer">${title}</a></li>`;
-          }).join("");
-
-          resultDiv.innerHTML = `
-            <p class="success">RSSフィードを取得しました！</p>
-            <ul>${list}</ul>
-          `;
-        } else {
-          const data = await response.json();
-          resultDiv.innerHTML = `
-            <p class="error">エラー: ${data.error || 'RSSが見つかりませんでした'}</p>
-            ${data.triedSelectors ? `<p>試したセレクタ: ${data.triedSelectors.join(", ")}</p>` : ''}
-          `;
+        if (!res.ok) {
+          const json = JSON.parse(text);
+          status.textContent = `エラー: ${json.error}`;
+          return;
         }
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, 'application/xml');
+        const items = xml.querySelectorAll('item');
+        status.textContent = `RSSフィードを取得しました！ (${items.length}件)`;
+
+        items.forEach(item => {
+          const title = item.querySelector('title')?.textContent || '(タイトルなし)';
+          const link = item.querySelector('link')?.textContent || '#';
+          const description = item.querySelector('description')?.textContent || '';
+          const enclosure = item.querySelector('enclosure');
+          const imageUrl = enclosure?.getAttribute('url');
+
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
+            <div class="item-desc">${description}</div>
+            ${imageUrl ? `<img src="${imageUrl}" alt="image" />` : ''}
+          `;
+          feed.appendChild(div);
+        });
+
       } catch (err) {
-        resultDiv.innerHTML = `<p class="error">通信エラー: ${err.message}</p>`;
+        console.error(err);
+        status.textContent = '取得中にエラーが発生しました';
       }
-    });
+    }
   </script>
 </body>
 </html>

@@ -6,16 +6,13 @@
   <title>失われた更新を追え！</title>
   <style>
     body {
-      font-family: 'Georgia', serif;
-      color: #222;
-      padding: 2rem;
-      margin: 0;
-      min-height: 100vh;
-      position: relative;
-      box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.2);
+      background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
       font-family: 'Pirata One', cursive;
     }
     .background-mask {
+      height: 80px; /* ← 高さを調整 */
+      background-color: #d2b48c; /* ← 追加！濃い茶色系 */
+      background-image: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
       position: absolute;
       top: 0; left: 0; right: 0; height: 150px;
       background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
@@ -36,8 +33,9 @@
       top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
       background-image:
-        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 12px),
-        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 12px);
+        url('/paper_00115.jpg'), /* ← ざらっとした紙の質感画像（任意） */
+          repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 12px),
+          repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 12px);
       mix-blend-mode: multiply;
       opacity: 0.3;
       z-index: 0;

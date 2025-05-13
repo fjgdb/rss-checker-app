@@ -6,27 +6,28 @@
   <title>失われた更新を追え！</title>
   <style>
     body {
+      background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
       font-family: 'Georgia', serif;
+      color: #222;
       padding: 2rem;
-      max-width: 700px;
-      margin: auto;
-      background-color: #f6f1e7;
-      color: #2d1f0b;
-      background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
+      margin: 0;
+      min-height: 100vh;
+      position: relative;
+      box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.2);
     }
-    h1 {
+    h1.subtitle {
       font-family: 'Impact', 'Arial Black', sans-serif;
-      font-size: 2.5rem;
-      color: #fff8dc; /* 薄いクリーム色 */
+      font-size: 2rem;
+      color: #fff8dc;
       text-shadow:
         -2px -2px 0 #000,
          2px -2px 0 #000,
         -2px  2px 0 #000,
          2px  2px 0 #000;
-      letter-spacing: 0.1em;
+      margin-top: -10px; /* ← ここを調整 */
       text-align: center;
-      margin-bottom: 1.5rem;
     }
+
     input {
       width: 80%;
       padding: 0.5rem;
@@ -79,7 +80,7 @@
 </head>
 <body>
   <img src="/logo.png" alt="Remus S. Sloane" style="max-width: 100%; height: auto; display: block; margin: 0 auto 1.5rem;" />
-  <h1>失われた更新を追え！</h1>
+  <h1 class="subtitle">失われた更新を追え！</h1>
   <input id="urlInput" type="text" placeholder="https://example.com" />
   <button onclick="checkRSS()">追跡開始</button>
   <div id="status">🧭 情報の地図を開いています...</div>

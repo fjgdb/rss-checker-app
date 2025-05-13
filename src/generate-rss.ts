@@ -1,16 +1,16 @@
 // /src/generate-rss.ts
 import type { Request, Response } from 'express'
 import * as cheerio from 'cheerio'
-import axios, { AxiosResponse } from 'axios'
+import axios from 'axios'
 import puppeteerExtra from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import escape from 'xml-escape'
 import chromium from '@sparticuz/chromium'
-import type * as puppeteer from 'puppeteer-core'
+import type { Browser } from 'puppeteer-core'
 
 puppeteerExtra.use(StealthPlugin())
 
-let browser: puppeteer.Browser | null = null
+let browser: Browser | null = null
 async function getBrowser() {
   if (!browser) {
     browser = await puppeteerExtra.launch({

@@ -63,9 +63,7 @@
       status.textContent = '🧠 作業開始！';
       feed.innerHTML = '';
 
-      // SSE開始
       const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-
       const endSignal = '[SSE-END]';
       const sseMessages = [];
 
@@ -76,19 +74,18 @@
             resolve();
           } else {
             sseMessages.push(e.data);
-            status.textContent += `\n👉 ${e.data}`;
+            status.textContent += `\n🧩 ${e.data}`;
           }
         };
 
         evtSource.onerror = (err) => {
           console.error('SSE error:', err);
-          status.textContent += '\n⚠️ SSE接続に問題が発生しました。';
+          status.textContent += '\n⚠️ 通信の精霊が迷子になったようです。';
           evtSource.close();
-          resolve(); // 明示的に進める（fetch()はとにかく試す）
+          resolve();
         };
       });
 
-      // SSE完了まで待ってから fetch
       await waitForSSEEnd;
 
       try {
@@ -108,7 +105,6 @@
           }
         }
 
-        // XMLとして受信されたとき（生成RSS）
         const xmlText = await res.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(xmlText, 'application/xml');
@@ -117,7 +113,7 @@
         const entries = xml.querySelectorAll('entry');
         const allItems = items.length > 0 ? items : entries;
 
-        status.textContent += `\n🧪 原材料：HTML、生成物：RSS (${allItems.length}件)`;
+        status.textContent += `\n🧪 錬成素材を発見：${allItems.length}件の記事`;
 
         allItems.forEach(item => {
           const title = item.querySelector('title')?.textContent || '(タイトルなし)';
@@ -138,7 +134,7 @@
 
       } catch (err) {
         console.error(err);
-        status.textContent += `\n❌ 何かが爆発しました: ${err.message}`;
+        status.textContent += `\n❌ エラー発生：${err.message}`;
       }
     }
   </script>

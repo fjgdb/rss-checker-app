@@ -8,12 +8,14 @@
     body {
       background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
       font-family: 'Pirata One', cursive;
+      margin: 0;
+      padding: 0;
     }
     .background-mask {
       height: 15vh; /* ← 高さを調整 */
         background:
          linear-gradient(to bottom, #b97b39 0%, transparent 100%), /* ← ここが濃い茶色→透明 */
-         radial-gradient(circle at center, #fdf5e6, #e0cda9 80%); /* 背景 */
+         radial-gradient(circle at center, #dbba92, #dbba92 80%); /* 背景 */
       background-blend-mode: multiply;
 
       -webkit-mask-image: url('/masks/ripped-top.svg');

@@ -6,15 +6,6 @@
   <title>失われた更新を追え！</title>
   <style>
     body {
-      background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
-        -webkit-mask-image: url('/masks/ripped-top.svg');
-        -webkit-mask-repeat: no-repeat;
-        -webkit-mask-size: 100% 100px;
-        -webkit-mask-position: top center;
-        mask-image: url('/masks/ripped-top.svg');
-        mask-repeat: no-repeat;
-        mask-size: 100% 100px;
-        mask-position: top center;
       font-family: 'Georgia', serif;
       color: #222;
       padding: 2rem;
@@ -30,6 +21,21 @@
         100% 100%, 0% 100%
       );
       font-family: 'Pirata One', cursive;
+    }
+    .background-mask {
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 100px;
+      background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
+      -webkit-mask-image: url('/masks/ripped-top.svg');
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-size: 100% 100px;
+      -webkit-mask-position: top center;
+      mask-image: url('/masks/ripped-top.svg');
+      mask-repeat: no-repeat;
+      mask-size: 100% 100px;
+      mask-position: top center;
+      z-index: 0;
+      pointer-events: none;
     }
     body::before {
       content: '';
@@ -131,6 +137,7 @@
   </style>
 </head>
 <body>
+  <div class="background-mask"></div>
   <div class="logo-wrapper">
     <img src="/logo.png" alt="Remus S. Sloane" class="logo-image" />
     <h1 class="logo-caption">失われた更新を追え！</h1>

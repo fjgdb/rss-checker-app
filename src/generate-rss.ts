@@ -1,4 +1,5 @@
 // /src/generate-rss.ts
+//test  
 import type { Request, Response } from 'express'
 import * as cheerio from 'cheerio'
 import puppeteer from 'puppeteer-core'
@@ -87,9 +88,21 @@ const handler = async (
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8' })
 
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
-    const html = await page.content()
-    await browser.close()
+let html = ''
+try {
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+  html = await page.content()
+} catch (err) {
+  if (err instanceof Error && err.message.includes('Timeout')) {
+    sendProgress('❄️ ページが氷の魔法で凍ってるみたいです…（タイムアウト）')
+  } else {
+    sendProgress(`💥 ページ読み込み中に事故発生: ${err}`)
+  }
+  await browser.close()
+  sendProgress('[SSE-END]')
+  res.end()
+  return
+}
 
     const $ = cheerio.load(html)
 

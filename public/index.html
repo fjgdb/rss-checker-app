@@ -15,6 +15,27 @@
       position: relative;
       box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.2);
     }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      background-image:
+        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 12px),
+        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 12px);
+      mix-blend-mode: multiply;
+      opacity: 0.3;
+      z-index: 0;
+    }
+    body {
+      clip-path: polygon(
+        0% 0%, 5% 2%, 10% 0%, 15% 2%, 20% 0%,
+        25% 2%, 30% 0%, 35% 2%, 40% 0%, 45% 2%,
+        50% 0%, 55% 2%, 60% 0%, 65% 2%, 70% 0%,
+        75% 2%, 80% 0%, 85% 2%, 90% 0%, 95% 2%, 100% 0%,
+        100% 100%, 0% 100%
+      );
+    }
     h1.subtitle {
       font-family: 'Impact', 'Arial Black', sans-serif;
       font-size: 2rem;
@@ -76,11 +97,37 @@
       height: auto;
       margin-top: 0.3rem;
     }
+    .logo-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 2rem;
+    }
+    
+    .logo-image {
+      display: block;
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    .logo-caption {
+      position: absolute;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
-  <img src="/logo.png" alt="Remus S. Sloane" style="max-width: 100%; height: auto; display: block; margin: 0 auto 1.5rem;" />
-  <h1 class="subtitle">失われた更新を追え！</h1>
+  <div class="logo-wrapper">
+    <img src="logo.png" alt="Remus S. Sloane" class="logo-image" />
+    <h1 class="logo-caption">失われた更新を追え！</h1>
+  </div>
   <input id="urlInput" type="text" placeholder="https://example.com" />
   <button onclick="checkRSS()">追跡開始</button>
   <div id="status">🧭 情報の地図を開いています...</div>

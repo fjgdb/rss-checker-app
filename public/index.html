@@ -13,18 +13,11 @@
       min-height: 100vh;
       position: relative;
       box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.2);
-      clip-path: polygon(
-        0% 0%, 5% 2%, 10% 0%, 15% 2%, 20% 0%,
-        25% 2%, 30% 0%, 35% 2%, 40% 0%, 45% 2%,
-        50% 0%, 55% 2%, 60% 0%, 65% 2%, 70% 0%,
-        75% 2%, 80% 0%, 85% 2%, 90% 0%, 95% 2%, 100% 0%,
-        100% 100%, 0% 100%
-      );
       font-family: 'Pirata One', cursive;
     }
     .background-mask {
       position: absolute;
-      top: 0; left: 0; right: 0; height: 100px;
+      top: 0; left: 0; right: 0; height: 150px;
       background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
       -webkit-mask-image: url('/masks/ripped-top.svg');
       -webkit-mask-repeat: no-repeat;
@@ -114,6 +107,7 @@
       position: relative;
       display: inline-block;
       margin-bottom: 2rem;
+      z-index: 1;
     }
     
     .logo-image {

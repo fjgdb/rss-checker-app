@@ -94,7 +94,7 @@ const handler = async (
   try {
     const browser = await getBrowser()
     const page = await browser.newPage()
-    sendProgress('👁️‍🗨️ サイトを観察中…')
+    sendProgress('🧭 地図の断片を探索中…')
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
@@ -105,7 +105,7 @@ const handler = async (
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 })
       html = await page.content()
     } catch (err) {
-      sendProgress(`🧪 パペット魔法失敗…バックアップ術式 axios 発動！`)
+      sendProgress(`🧨 探索ルート崩落！代替経路で突入！`)
       try {
         const response = await axios.get(url)
         html = response.data
@@ -189,7 +189,7 @@ const handler = async (
   }
 
   if (itemMap.size === 0) {
-    sendProgress('😢 記事が全然見つかりませんでした…')
+    sendProgress('❌ 遺跡は空っぽだった…別の手がかりを探そう！…')
     sendProgress('[SSE-END]')
     res.end()
     return
@@ -220,7 +220,7 @@ const handler = async (
   const generatedUrl = `${req.protocol}://${req.get('host')}${apiUrl}?url=${encodeURIComponent(url)}`
   cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
 
-  sendProgress(`🧙‍♂️ RSSの錬成完了！魔法の巻物はこちら：${generatedUrl}`)
+  sendProgress(`📜 更新の巻物を発見！ここに眠っていたか…！：${generatedUrl}`)
   sendProgress('[SSE-END]')
   res.end()
 }

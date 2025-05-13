@@ -90,7 +90,7 @@ const handler = async (
 
 let html = ''
 try {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 })
   html = await page.content()
 } catch (err) {
   if (err instanceof Error && err.message.includes('Timeout')) {

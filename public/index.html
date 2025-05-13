@@ -10,17 +10,21 @@
       font-family: 'Pirata One', cursive;
     }
     .background-mask {
-      height: 80px; /* ← 高さを調整 */
-      background-color: #d2b48c; /* ← 追加！濃い茶色系 */
+      height: 15vh; /* ← 高さを調整 */
+      background-color: #a68a67; /* ← 追加！濃い茶色系 */
       background-image: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
       position: absolute;
       top: 0; left: 0; right: 0; height: 150px;
       background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
-      -webkit-mask-image: url('/masks/ripped-top.svg');
+      -webkit-mask-image: 
+        linear-gradient(to bottom, black 0%, transparent 100%),
+        url('/masks/ripped-top.svg');
       -webkit-mask-repeat: no-repeat;
       -webkit-mask-size: 100% 100px;
       -webkit-mask-position: top center;
-      mask-image: url('/masks/ripped-top.svg');
+      mask-image: 
+        linear-gradient(to bottom, black 0%, transparent 100%),
+        url('/masks/ripped-top.svg');
       mask-repeat: no-repeat;
       mask-size: 100% 100px;
       mask-position: top center;
@@ -32,10 +36,7 @@
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
-      background-image:
-        url('/paper_00115.jpg'), /* ← ざらっとした紙の質感画像（任意） */
-          repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 12px),
-          repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.04) 12px);
+      background-color: #dbba92;
       mix-blend-mode: multiply;
       opacity: 0.3;
       z-index: 0;

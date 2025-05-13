@@ -2,7 +2,6 @@
 import type { Request, Response } from 'express'
 import * as cheerio from 'cheerio'
 import axios, { AxiosResponse } from 'axios'
-
 import puppeteerExtra from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import escape from 'xml-escape'
@@ -40,7 +39,7 @@ const handler = async (
   const sendProgress = (msg: string) => {
     res.write(`data: ${msg}\n\n`)
     if (typeof (res as any).flush === 'function') {
-      (res as any).flush()
+      ;(res as any).flush()
     }
   }
 
@@ -81,7 +80,7 @@ const handler = async (
     sendProgress('📦 キャッシュから魔法の巻物を召喚！')
     res.write(`data: ${cached.xml}\n\n`)
     if (typeof (res as any).flush === 'function') {
-      (res as any).flush()
+      ;(res as any).flush()
     }
     sendProgress('[SSE-END]')
     res.end()
@@ -92,7 +91,7 @@ const handler = async (
   try {
     const browser = await getBrowser()
     const page = await browser.newPage()
-    sendProgress('👁️‍🗨️ サイトを覗き見中...')
+    sendProgress('👁️‍🗨️ サイトを観察中…')
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
@@ -103,7 +102,7 @@ const handler = async (
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 })
       html = await page.content()
     } catch (err) {
-      sendProgress(`🔄 パペット魔法が不発！バックアップ術式 axios を起動…`)
+      sendProgress(`🧪 パペット魔法失敗…バックアップ術式 axios 発動！`)
       try {
         const response = await axios.get(url)
         html = response.data
@@ -115,7 +114,7 @@ const handler = async (
       }
     }
   } catch (totalErr) {
-    sendProgress(`💥 ポータルの召喚に失敗！シムたちがザワついてます…`)
+    sendProgress(`🌀 魔法陣の召喚に失敗しました…シムたちは困惑中！`)
     sendProgress('[SSE-END]')
     res.end()
     return
@@ -123,26 +122,6 @@ const handler = async (
 
   const $ = cheerio.load(html)
 
-  // 既存RSSリンクの確認（復元）
-  const rssLink = $('link[type="application/rss+xml"]').attr('href')
-
-  if (rssLink) {
-    const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-    sendProgress('📡 既存のRSSフィードを発見！リンクを転送中...')
-    try {
-      const rssResponse = await fetch(absoluteRss)
-      const rssText = await rssResponse.text()
-      cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
-      sendProgress(`✅ フィードURL: ${absoluteRss}`)
-      sendProgress('[SSE-END]')
-      res.end()
-      return
-    } catch (err) {
-      sendProgress('⚠️ フィード取得に失敗…手作業で錬成します！')
-    }
-  }
-
-  // 🔎 既存のRSSフィード確認パート（復元）
   const rssLink = $('link[type="application/rss+xml"]').attr('href') ||
                   $('link[type="application/atom+xml"]').attr('href')
 
@@ -169,9 +148,10 @@ const handler = async (
       res.end()
       return
     } catch (err) {
-      sendProgress('⚠️ フィード取得に失敗…手作業で錬成します！')
+      sendProgress('⚠️ フィード取得失敗…魔法使いの手で錬成を続行します！')
     }
   }
+
   const fallbackSelectors = [
     'article a', 'h2 a', 'h3 a',
     '.entry-title a', '.post-title a', '.headline a',
@@ -237,7 +217,7 @@ const handler = async (
   const generatedUrl = `${req.protocol}://${req.get('host')}${apiUrl}?url=${encodeURIComponent(url)}`
   cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
 
-  sendProgress(`✨ RSSの錬成完了！魔法の巻物はこちら：${generatedUrl}`)
+  sendProgress(`🧙‍♂️ RSSの錬成完了！魔法の巻物はこちら：${generatedUrl}`)
   sendProgress('[SSE-END]')
   res.end()
 }

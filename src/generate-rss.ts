@@ -11,7 +11,7 @@ import type { Browser } from 'puppeteer-core'
 puppeteerExtra.use(StealthPlugin())
 
 let browser: Browser | null = null
-async function getBrowser() {
+async function getBrowser(): Promise<Browser> {
   if (!browser) {
     browser = await puppeteerExtra.launch({
       args: chromium.args,
@@ -19,7 +19,10 @@ async function getBrowser() {
       headless: chromium.headless,
     })
   }
-  return browser
+
+  const b = browser
+  if (!b) throw new Error('Browser launch failed')
+  return b
 }
 
 const cache = new Map<string, { xml: string, expires: number }>()

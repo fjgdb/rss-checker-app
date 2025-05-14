@@ -146,7 +146,7 @@ const handler = async (
 
   if (rssLink) {
     const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-    sendProgress('📡 既存の巻物（RSSフィード）を発見！')
+    sendProgress('📡 石板（RSS）を発見！')
 
     try {
       const rssResponse = await fetch(absoluteRss, {
@@ -170,7 +170,7 @@ const handler = async (
       sendProgress('[SSE-END]')
       return
     } catch (err) {
-      sendProgress('⚠️ RSS巻物の取得に失敗…自らの手で書き起こす！')
+      sendProgress('⚠️ 石板（RSS）の取得に失敗…代替手段だ！')
     }
   }
 

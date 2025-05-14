@@ -336,15 +336,13 @@
               resolve();
             } else {
               sseMessages.push(e.data);
-              // status.textContent += `\n ${e.data}`;
               setSpeech(`\n ${e.data}`)
             }
           };
   
           evtSource.onerror = (err) => {
             console.error('SSE error:', err);
-            setSpeech('⚠️ 通信に問題発生。探検を継続できません。')
-            // status.textContent += '\n⚠️ 通信に問題発生。探検を継続できません。';
+            lockExplorerToButton("error", `⚠️ 通信に問題発生。探検を継続できません。`);
             evtSource.close();
             resolve();
           };
@@ -375,7 +373,6 @@
   
           if (allItems.length > 0) {
              setSpeech(`💡 記録のかけらを発見：${allItems.length}件の記事`)
-            //  status.textContent += `\n💡 記録のかけらを発見：${allItems.length}件の記事`;
           }
   
           allItems.forEach(item => {
@@ -397,8 +394,6 @@
   
         } catch (err) {
           console.error(err);
-          // setSpeech(`💥 遺跡の解読に失敗：${err.message}`)
-          // status.textContent += `\n💥 遺跡の解読に失敗：${err.message}`;
           lockExplorerToButton("error", `💥 遺跡の解読に失敗：${err.message}`);
         }
       }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>R.S.S.-配信石板の残骸-</title>
+  <title>R.S.S.-配信石板の残骸を追え！-</title>
   <style>
     body {
       background-image: url('/background.jpg'); /* 画像のパス */
@@ -358,18 +358,11 @@
   
           if (contentType?.includes('application/json')) {
             const data = await res.json();
-            if (res.ok && data.rssUrl) {
-              // status.innerHTML += `\n✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
-              setSpeech(`✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`)
-              return;
+            if (data.status === "success") {
+              lockExplorerToButton("success", `📜 更新の巻物を発見！ここに眠っていたか…！：<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`);
             } else {
-              const reason = data?.details || '不明な障害';
-              const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
-              // setSpeech(`❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`)
-              // status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`;
-              lockExplorerToButton("error", `❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`);
-              return;
-            }
+              lockExplorerToButton("error", `❌ エラー:  ${data.message || "探索失敗"}`);
+            } 
           }
   
           const xmlText = await res.text();

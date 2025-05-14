@@ -54,24 +54,30 @@ const handler = async (
   } 
   const { url, selector } = req.query
   if (typeof url !== 'string') {
-    sendProgress('🧭 探検開始できず！URLが見当たらない！')
+    res.status(500).json({
+      status: "error",
+      message: "🧭 探検開始できず！URLが見当たらない！",
+    })
     sendProgress('[SSE-END]')
-    res.end()
     return
   }
 
   try {
     const parsed = new URL(url)
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      sendProgress('🧭 未知の道だ！URLの形式が怪しい！')
+      res.status(500).json({
+        status: "error",
+        message: "🧭 未知の道だ！URLの形式が怪しい！",
+      })
       sendProgress('[SSE-END]')
-      res.end()
       return
     }
   } catch {
-    sendProgress('💥 URLが壊れている…地図としては使えない！')
+    res.status(500).json({
+      status: "error",
+      message: "💥 URLが壊れている…地図としては使えない！",
+    })
     sendProgress('[SSE-END]')
-    res.end()
     return
   }
 
@@ -116,16 +122,20 @@ const handler = async (
         const response = await axios.get(url)
         html = response.data
       } catch (fallbackErr) {
-        sendProgress(`💥 調査失敗: ${fallbackErr}`)
+        res.status(500).json({
+          status: "error",
+          message: `💥 調査失敗: ${fallbackErr}`,
+        })
         sendProgress('[SSE-END]')
-        res.end()
         return
       }
     }
   } catch (totalErr) {
-    sendProgress(`🌀 探検用装置が召喚に失敗した…撤退せざるを得ない！`)
+    res.status(500).json({
+      status: "error",
+      message: `🌀 探検用装置が召喚に失敗した…撤退せざるを得ない！`
+    })
     sendProgress('[SSE-END]')
-    res.end()
     return
   }
 
@@ -152,9 +162,12 @@ const handler = async (
       const rssText = await rssResponse.text()
       cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
 
-      sendProgress(`✅ 巻物URL: ${absoluteRss}`)
+      res.json({
+        status: "success",
+        rssUrl: `${absoluteRss}`,
+      })
+
       sendProgress('[SSE-END]')
-      res.end()
       return
     } catch (err) {
       sendProgress('⚠️ RSS巻物の取得に失敗…自らの手で書き起こす！')
@@ -197,7 +210,6 @@ const handler = async (
   if (itemMap.size === 0) {
     sendProgress('❌ 遺跡は空っぽだった…別の手がかりを探そう！…')
     sendProgress('[SSE-END]')
-    res.end()
     return
   }
 
@@ -227,9 +239,11 @@ const handler = async (
   cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
 
   if (isSSE) {
-    sendProgress(`📜 更新の巻物を発見！ここに眠っていたか…！：${generatedUrl}`)
+    res.json({
+      status: "success",
+      rssUrl: generatedUrl,
+    })
     sendProgress('[SSE-END]')
-    res.end()
   } else {
     res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8')
     res.send(rss)

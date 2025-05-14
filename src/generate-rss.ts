@@ -42,8 +42,8 @@ const handler = async (
      res.flushHeaders?.()
    }
    const sendProgress = (msg: string) => {
-    res.write(`data: ${msg}\n\n`)
-    if (isSSE) {
+    
+  if (isSSE) {
     res.write(`data: ${msg}\n\n`)
     if (typeof (res as any).flush === 'function') {
       ;(res as any).flush()

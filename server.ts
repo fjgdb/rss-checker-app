@@ -7,6 +7,7 @@ const app = express();
 
 // public フォルダを静的ファイルとして提供
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('trust proxy', true);
 
 app.get('/api/generate-rss', (req, res) => {
   generateRSS(req, res).catch((err) => {

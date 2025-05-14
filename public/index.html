@@ -324,9 +324,9 @@ function updateExplorerPosition() {
       setInterval(updateExplorerPosition, 20)
       
       // ステータスメッセージを吹き出しに表示
-      function setSpeech(message) {
-        speech.textContent = message
-      }
+function setSpeech(message) {
+  speech.innerHTML = message;
+}
       
       //rssチェッカー
       async function checkRSS() {

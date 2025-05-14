@@ -57,14 +57,14 @@
       border: none;
       cursor: pointer;
     }
-    #status {
-      margin-top: 1rem;
-      white-space: pre-line;
-      font-family: 'Courier New', monospace;
-      background: #f8f4e3;
-      border: 1px dashed #c0a060;
-      padding: 0.8rem;
-    }
+    /* #status { */
+    /*   margin-top: 1rem; */
+    /*   white-space: pre-line; */
+    /*   font-family: 'Courier New', monospace; */
+    /*   background: #f8f4e3; */
+    /*   border: 1px dashed #c0a060; */
+    /*   padding: 0.8rem; */
+    /* } */
     #feed {
       margin-top: 2rem;
       border-top: 1px solid #ccc;
@@ -146,40 +146,81 @@
     }
 
     @keyframes walkCycle {
-      0%   { content: url('/1.png'); }
-      33%  { content: url('/2.png'); }
-      66%  { content: url('/3.png'); }
-      100% { content: url('/1.png'); }
+      0%   { content: url('/1.PNG'); }
+      33%  { content: url('/2.PNG'); }
+      66%  { content: url('/3.PNG'); }
+      100% { content: url('/1.PNG'); }
     }
-
-  </style>
+    #explorer-container {
+      position: absolute;
+      left: 100px;
+      top: 100px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    
+    #explorer {
+      width: 40px;
+      height: 40px;
+    }
+    
+    #speech-bubble {
+      position: absolute;
+      bottom: 45px !important;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff8dc;
+      border: 1px solid #8b5a2b;
+      border-radius: 8px;
+      padding: 0.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      max-width: 800px !important;
+      white-space: pre-line;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    #speech-bubble::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #fff8dc transparent transparent transparent;
+    }
+ 
+</style>
 </head>
 <body>
+  <div id="explorer-container">
+    <img id="explorer" src="/1.PNG" alt="探検家" />
+    <div id="speech-bubble">🧭 情報の地図を開いています...</div>
+  </div>
   <div class="blur-overlay"></div>
-  <div class="container">
-    <img id="explorer" src="/1.png" alt="探検家" />
+  <div class="container">    
     <div class="logo-wrapper">
       <img src="/logo.png" alt="Remus S. Sloane" class="logo-image" />
       <!-- <h1 class="logo-caption">失われた更新を追え！</h1> -->
     </div>
     <input id="urlInput" type="text" placeholder="https://example.com" />
     <button onclick="checkRSS()">追跡開始</button>
-    <div id="status">🧭 情報の地図を開いています...</div>
+    <!-- <div id="status">🧭 情報の地図を開いています...</div> -->
     <div id="feed"></div>
   
     <script>
       //探検家の動き制御
       const explorer = document.getElementById('explorer')
-      const frames = ['/1.png', '/2.png', '/3.png']
-      let frameIndex = 0
+      const explorerContainer = document.getElementById('explorer-container')
+      const speech = document.getElementById('speech-bubble')
       
-      // アニメーション（足踏み）
+      const frames = ['/1.PNG', '/2.PNG', '/3.PNG']
+      let frameIndex = 0
       setInterval(() => {
         explorer.src = frames[frameIndex]
         frameIndex = (frameIndex + 1) % frames.length
       }, 200)
       
-      // 初期位置
       let pos = { x: 100, y: 100 }
       let target = getRandomPosition()
       
@@ -192,37 +233,38 @@
       }
       
       function updateExplorerPosition() {
-        const speed = 1.5 // 小さいほどゆっくり
+        const speed = 1.5
         const dx = target.x - pos.x
         const dy = target.y - pos.y
         const distance = Math.sqrt(dx * dx + dy * dy)
       
-        // 到着したら次の目的地へ
         if (distance < speed) {
           target = getRandomPosition()
           return
         }
       
-        // 方向に向かって少しだけ移動
         pos.x += (dx / distance) * speed
         pos.y += (dy / distance) * speed
       
-        // 移動方向に応じて反転
         explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)'
       
-        explorer.style.left = `${pos.x}px`
-        explorer.style.top = `${pos.y}px`
+        explorerContainer.style.left = `${pos.x}px`
+        explorerContainer.style.top = `${pos.y}px`
       }
       
-      // 毎フレーム位置更新
       setInterval(updateExplorerPosition, 20)
-    
+      
+      // ステータスメッセージを吹き出しに表示
+      function setSpeech(message) {
+        speech.textContent = message
+      }
+      
       //rssチェッカー
       async function checkRSS() {
         const url = document.getElementById('urlInput').value;
         const status = document.getElementById('status');
         const feed = document.getElementById('feed');
-        status.textContent = '🧭 探索を開始...';
+        setSpeech('🧭 探索を開始...')
         feed.innerHTML = '';
   
         const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
@@ -236,13 +278,15 @@
               resolve();
             } else {
               sseMessages.push(e.data);
-              status.textContent += `\n ${e.data}`;
+              // status.textContent += `\n ${e.data}`;
+              setSpeech(`\n ${e.data}`)
             }
           };
   
           evtSource.onerror = (err) => {
             console.error('SSE error:', err);
-            status.textContent += '\n⚠️ 通信に問題発生。探検を継続できません。';
+            setSpeech('⚠️ 通信に問題発生。探検を継続できません。')
+            // status.textContent += '\n⚠️ 通信に問題発生。探検を継続できません。';
             evtSource.close();
             resolve();
           };
@@ -257,12 +301,14 @@
           if (contentType?.includes('application/json')) {
             const data = await res.json();
             if (res.ok && data.rssUrl) {
-              status.innerHTML += `\n✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+              setSpeech(`✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`)
+              // status.innerHTML += `\n✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
               return;
             } else {
               const reason = data?.details || '不明な障害';
               const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
-              status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`;
+              setSpeech(`❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`)
+              // status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`;
               return;
             }
           }
@@ -276,7 +322,8 @@
           const allItems = items.length > 0 ? items : entries;
   
           if (allItems.length > 0) {
-             status.textContent += `\n💡 記録のかけらを発見：${allItems.length}件の記事`;
+             setSpeech(`💡 記録のかけらを発見：${allItems.length}件の記事`)
+            //  status.textContent += `\n💡 記録のかけらを発見：${allItems.length}件の記事`;
           }
   
           allItems.forEach(item => {
@@ -298,7 +345,8 @@
   
         } catch (err) {
           console.error(err);
-          status.textContent += `\n💥 遺跡の解読に失敗：${err.message}`;
+          setSpeech(`💥 遺跡の解読に失敗：${err.message}`)
+          // status.textContent += `\n💥 遺跡の解読に失敗：${err.message}`;
         }
       }
     </script>

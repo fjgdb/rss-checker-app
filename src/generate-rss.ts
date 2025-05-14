@@ -244,6 +244,7 @@ const handler = async (
       rssUrl: generatedUrl,
     })
     sendProgress('[SSE-END]')
+    res.end();
   } else {
     res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8')
     res.send(rss)

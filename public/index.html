@@ -223,7 +223,7 @@
 </head>
 <body>
   <div id="explorer-container">
-    <img id="explorer" src="/1.PNG" alt="探検家" />
+    <img id="explorer" src="/explorer/1.PNG" alt="探検家" />
     <div id="speech-bubble">🧭 情報の地図を開いています...</div>
   </div>
   <div class="blur-overlay"></div>
@@ -241,6 +241,16 @@
   
     <script>
       //探検家の動き制御
+      // 最初の方で追記
+let walkAnimationTimer;
+let moveTimer;
+      // アニメーション開始のところを変更
+walkAnimationTimer = setInterval(() => {
+  explorer.src = frames[frameIndex];
+  frameIndex = (frameIndex + 1) % frames.length;
+}, 200);
+
+moveTimer = setInterval(updateExplorerPosition, 20);
       const explorer = document.getElementById('explorer')
       const explorerContainer = document.getElementById('explorer-container')
       const speech = document.getElementById('speech-bubble')
@@ -256,13 +266,15 @@
       let target = getRandomPosition()
       
       function getRandomPosition() {
-        const padding = 100//要検討
-        const explorerSize = 400//要検討
-        return {
-          x: Math.random() * (window.innerWidth - explorerSize - padding),
-          y: Math.random() * (window.innerHeight - explorerSize - padding)
-        }
-      }
+  const padding = 20; // 画面端の余白
+  const explorerWidth = 40; // #explorer のCSS幅
+  const bubbleHeight = 80;  // 吹き出し含む高さの想定
+
+  return {
+    x: Math.random() * (window.innerWidth - explorerWidth - padding * 2) + padding,
+    y: Math.random() * (window.innerHeight - bubbleHeight - padding * 2) + padding,
+  };
+}
       
       function updateExplorerPosition() {
         const speed = 1.5
@@ -302,13 +314,6 @@
           const offsetLeft = containerRect.left + bubble.offsetLeft - bubble.offsetWidth / 2;
           const offsetRight = containerRect.left + bubble.offsetLeft + bubble.offsetWidth / 2;
         
-          if (offsetLeft < 0) {
-            bubble.style.left = `${bubble.offsetWidth / 2}px`;
-            bubble.style.transform = 'translateX(0)';
-          } else if (offsetRight > window.innerWidth) {
-            bubble.style.left = `calc(100% - ${bubble.offsetWidth / 2}px)`;
-            bubble.style.transform = 'translateX(-100%)';
-          }
         });
       }
       
@@ -332,23 +337,29 @@
         const sseMessages = [];
   
         const waitForSSEEnd = new Promise((resolve, reject) => {
-          evtSource.onmessage = (e) => {
-            if (e.data === endSignal) {
-              evtSource.close();
-              resolve();
-            } else {
-              sseMessages.push(e.data);
-              setSpeech(`\n ${e.data}`)
-            }
-          };
-  
-          evtSource.onerror = (err) => {
-            console.error('SSE error:', err);
-            lockExplorerToButton("error", `⚠️ 通信に問題発生。探検を継続できません。`);
-            evtSource.close();
-            resolve();
-          };
-        });
+  evtSource.onmessage = (e) => {
+    if (e.data === '[SSE-END]') {
+      evtSource.close();
+      resolve();
+    } else {
+      try {
+        const parsed = JSON.parse(e.data);
+        if (parsed.status === 'success') {
+          lockExplorerToButton('success', `✅ 巻物を発見！<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`);
+        }
+      } catch {
+        setSpeech(e.data); // 普通のSims4風メッセージ
+      }
+    }
+  };
+
+  evtSource.onerror = (err) => {
+    console.error('SSE error:', err);
+    setSpeech('⚠️ 通信に問題発生。探検を継続できません。');
+    evtSource.close();
+    resolve();
+  };
+});
   
         await waitForSSEEnd;
   

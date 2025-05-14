@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>失われた更新を追え！</title>
+  <title>R.S.S.-配信石板の残骸-</title>
   <style>
     body {
       background-image: url('/background.jpg'); /* 画像のパス */
@@ -20,11 +20,12 @@
       position: relative;
     }
     .blur-overlay {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
+      min-height: 100vh;
       backdrop-filter: blur(5px);
       z-index: 0;
     }
@@ -136,27 +137,28 @@
     
     #explorer {
       position: absolute;
-      width: 40px;
-      height: 40px;
+      /* width: 40px; */
+      /* height: 40px; */
       z-index: 9999;
       pointer-events: none;
-      left: 100px;
-      top: 100px;
+      /* left: 100px; */
+      /* top: 100px; */
       transition: none; /* 瞬間移動せず滑らか更新に任せる */
     }
 
     @keyframes walkCycle {
-      0%   { content: url('/1.PNG'); }
-      33%  { content: url('/2.PNG'); }
-      66%  { content: url('/3.PNG'); }
-      100% { content: url('/1.PNG'); }
+      0%   { content: url('/explorer/1.PNG'); }
+      33%  { content: url('/explorer/2.PNG'); }
+      66%  { content: url('/explorer/3.PNG'); }
+      100% { content: url('/explorer/1.PNG'); }
     }
     #explorer-container {
       position: absolute;
-      left: 100px;
-      top: 100px;
       z-index: 9999;
       pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* ← 水平方向中央揃え */
     }
     
     #explorer {
@@ -165,9 +167,9 @@
     }
     
     #speech-bubble {
-      position: absolute;
-      bottom: 45px !important;
-      left: 50%;
+      position: relative;
+      bottom: 45px; 
+      /* left: 50%; */
       transform: translateX(-50%);
       background: #fff8dc;
       border: 1px solid #8b5a2b;
@@ -175,21 +177,48 @@
       padding: 0.5rem;
       font-family: 'Courier New', monospace;
       font-size: 0.85rem;
-      max-width: 800px !important;
+      min-width: 100px;
+      max-width: 600px;
       white-space: pre-line;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+      z-index: 1;  
     }
     #speech-bubble::after {
       content: "";
       position: absolute;
-      top: 100%;
+      bottom: -10px; /* 三角形の位置 */
       left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #fff8dc transparent transparent transparent;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 10px solid #fff8dc; /* 吹き出しの背景色と同じ */
+    
+      /* 下に擬似要素で枠線つき三角形をかぶせる */
+      z-index: 1;
     }
- 
+    
+    #speech-bubble::before {
+      content: "";
+      position: absolute;
+      bottom: -11px; /* ::afterより1px下 */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-top: 11px solid #8b5a2b; /* 枠線の色（本体と同じ） */
+      z-index: 0;
+    } 
+    /* 既存の explorer に上書えさせる画像切り替えクラス */
+    #explorer.success {
+      content: url('/explorer/success.PNG');
+    }
+    #explorer.error {
+      content: url('/explorer/error.PNG');
+    }
+
 </style>
 </head>
 <body>
@@ -204,7 +233,7 @@
       <!-- <h1 class="logo-caption">失われた更新を追え！</h1> -->
     </div>
     <input id="urlInput" type="text" placeholder="https://example.com" />
-    <button onclick="checkRSS()">追跡開始</button>
+    <button id="trackBtn" onclick="checkRSS()">追跡開始</button>
     <!-- <div id="status">🧭 情報の地図を開いています...</div> -->
     <div id="feed"></div>
   
@@ -214,7 +243,7 @@
       const explorerContainer = document.getElementById('explorer-container')
       const speech = document.getElementById('speech-bubble')
       
-      const frames = ['/1.PNG', '/2.PNG', '/3.PNG']
+      const frames = ['/explorer/1.PNG', '/explorer/2.PNG', '/explorer/3.PNG']
       let frameIndex = 0
       setInterval(() => {
         explorer.src = frames[frameIndex]
@@ -225,10 +254,11 @@
       let target = getRandomPosition()
       
       function getRandomPosition() {
-        const padding = 50
+        const padding = 100//要検討
+        const explorerSize = 400//要検討
         return {
-          x: Math.random() * (window.innerWidth - padding),
-          y: Math.random() * (window.innerHeight - padding)
+          x: Math.random() * (window.innerWidth - explorerSize - padding),
+          y: Math.random() * (window.innerHeight - explorerSize - padding)
         }
       }
       
@@ -250,6 +280,34 @@
       
         explorerContainer.style.left = `${pos.x}px`
         explorerContainer.style.top = `${pos.y}px`
+
+        // 🗨 吹き出しを探検家の上に配置（画像の高さ + 少し）
+         const bubble = document.getElementById('speech-bubble');
+        //  bubble.style.top = `${pos.y - bubbleOffset}px`;
+        //  bubble.style.left = `${pos.x}px`;
+
+        // --- 吹き出し補正 ---
+        requestAnimationFrame(() => {
+          const bubble = speech;
+          const containerRect = explorerContainer.getBoundingClientRect();
+          const bubbleRect = bubble.getBoundingClientRect();
+      
+         // 吹き出しをデフォルトで中央に配置
+           bubble.style.left = '50%';
+           bubble.style.transform = 'translateX(-50%)';
+        
+          // 左にはみ出すなら補正
+          const offsetLeft = containerRect.left + bubble.offsetLeft - bubble.offsetWidth / 2;
+          const offsetRight = containerRect.left + bubble.offsetLeft + bubble.offsetWidth / 2;
+        
+          if (offsetLeft < 0) {
+            bubble.style.left = `${bubble.offsetWidth / 2}px`;
+            bubble.style.transform = 'translateX(0)';
+          } else if (offsetRight > window.innerWidth) {
+            bubble.style.left = `calc(100% - ${bubble.offsetWidth / 2}px)`;
+            bubble.style.transform = 'translateX(-100%)';
+          }
+        });
       }
       
       setInterval(updateExplorerPosition, 20)
@@ -301,14 +359,15 @@
           if (contentType?.includes('application/json')) {
             const data = await res.json();
             if (res.ok && data.rssUrl) {
-              setSpeech(`✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`)
               // status.innerHTML += `\n✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+              setSpeech(`✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`)
               return;
             } else {
               const reason = data?.details || '不明な障害';
               const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
-              setSpeech(`❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`)
+              // setSpeech(`❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`)
               // status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`;
+              lockExplorerToButton("error", `❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`);
               return;
             }
           }
@@ -345,10 +404,40 @@
   
         } catch (err) {
           console.error(err);
-          setSpeech(`💥 遺跡の解読に失敗：${err.message}`)
+          // setSpeech(`💥 遺跡の解読に失敗：${err.message}`)
           // status.textContent += `\n💥 遺跡の解読に失敗：${err.message}`;
+          lockExplorerToButton("error", `💥 遺跡の解読に失敗：${err.message}`);
         }
       }
+      function lockExplorerToButton(state, message) {
+        const btn = document.getElementById("trackBtn");
+        const rect = btn.getBoundingClientRect();
+        const container = document.getElementById("explorer-container");
+      
+        // ボタンの真下に配置
+        const top = rect.bottom + window.scrollY + 10;
+        const left = rect.left + rect.width / 2;
+      
+        container.style.position = "absolute";
+        container.style.top = `${top}px`;
+        container.style.left = `${left}px`;
+        container.style.transform = "translateX(-50%)";
+      
+        // アニメーション停止
+        clearInterval(walkAnimationTimer); // フレーム切り替え止める（必要に応じて）
+        clearInterval(moveTimer);          // 歩行移動も止める
+      
+        // 状態に応じて画像変更
+        explorer.classList.remove("success", "error");
+        if (state === "success") {
+          explorer.classList.add("success");
+        } else if (state === "error") {
+          explorer.classList.add("error");
+        }
+      
+        setSpeech(message);
+      }
+
     </script>
   </div>
 </body>

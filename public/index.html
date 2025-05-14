@@ -6,39 +6,26 @@
   <title>失われた更新を追え！</title>
   <style>
     body {
-      background: radial-gradient(circle at center, #fdf5e6, #e0cda9 80%);
-      font-family: 'Pirata One', cursive;
+      background-image: url('/background.jpg'); /* 画像のパス */
+      background-size: cover;           /* 画面サイズに合わせて拡大縮小 */
+      background-position: center;      /* 中央揃え */
+      background-repeat: no-repeat;     /* 繰り返さない */
       margin: 0;
       padding: 0;
+      min-height: 100vh;                /* ビューポート全体の高さを確保 */
+      display: flex;
+      align-items: center; /* ← 上下中央 */
+      justify-content: center; /* ← 左右中央 */
+      overflow: hidden;
+      position: relative;
     }
-    .background-mask {
-      height: 5vh; /* ← 高さを調整 */
-        background:
-         linear-gradient(to bottom, #d4b085 0%, transparent 100%), /* ← ここが濃い茶色→透明 */
-         radial-gradient(circle at center, #dbba92, #dbba92 80%); /* 背景 */
-      background-blend-mode: multiply;
-
-      -webkit-mask-image: url('/masks/ripped-top.svg');
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-size: 100% 100%;
-      -webkit-mask-position: top center;
-    
-      mask-image: url('/masks/ripped-top.svg');
-      mask-repeat: no-repeat;
-      mask-size: 100% 100%;
-      mask-position: top center;
-    
-      z-index: 0;
-      pointer-events: none;
-    }
-    body::before {
-      content: '';
+    .blur-overlay {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none;
-      background-color: #dbba92;
-      mix-blend-mode: multiply;
-      opacity: 0.3;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      backdrop-filter: blur(5px);
       z-index: 0;
     }
     h1.subtitle {
@@ -113,6 +100,7 @@
       display: block;
       width: 100%;
       max-width: 600px;
+      position: center; 
     }
     
     .logo-caption {
@@ -127,103 +115,123 @@
       text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
       white-space: nowrap;
     }
+    .container {
+      text-align: center;
+      max-width: 100%;
+      width: 100%;
+      padding: 2rem;
+      /* background-color: rgba(255, 255, 255, 0.1); /* 薄い背景が必要なら */ 
+      /* backdrop-filter: blur(2px); /* オプションでぼかし */ 
+      /* border-radius: 1rem;         /* 角を丸く */ 
+      /* box-shadow: 0 0 10px rgba(0,0,0,0.2); */
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="background-mask"></div>
-  <div class="logo-wrapper">
-    <img src="/logo.png" alt="Remus S. Sloane" class="logo-image" />
-    <h1 class="logo-caption">失われた更新を追え！</h1>
-  </div>
-  <input id="urlInput" type="text" placeholder="https://example.com" />
-  <button onclick="checkRSS()">追跡開始</button>
-  <div id="status">🧭 情報の地図を開いています...</div>
-  <div id="feed"></div>
-
-  <script>
-    async function checkRSS() {
-      const url = document.getElementById('urlInput').value;
-      const status = document.getElementById('status');
-      const feed = document.getElementById('feed');
-      status.textContent = '🧭 探索を開始...';
-      feed.innerHTML = '';
-
-      const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-      const endSignal = '[SSE-END]';
-      const sseMessages = [];
-
-      const waitForSSEEnd = new Promise((resolve, reject) => {
-        evtSource.onmessage = (e) => {
-          if (e.data === endSignal) {
+  <div class="blur-overlay"></div>
+  <div class="container">
+    <div class="logo-wrapper">
+      <img src="/logo.png" alt="Remus S. Sloane" class="logo-image" />
+      <h1 class="logo-caption">失われた更新を追え！</h1>
+    </div>
+    <input id="urlInput" type="text" placeholder="https://example.com" />
+    <button onclick="checkRSS()">追跡開始</button>
+    <div id="status">🧭 情報の地図を開いています...</div>
+    <div id="feed"></div>
+  
+    <script>
+      async function checkRSS() {
+        const url = document.getElementById('urlInput').value;
+        const status = document.getElementById('status');
+        const feed = document.getElementById('feed');
+        status.textContent = '🧭 探索を開始...';
+        feed.innerHTML = '';
+  
+        const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+        const endSignal = '[SSE-END]';
+        const sseMessages = [];
+  
+        const waitForSSEEnd = new Promise((resolve, reject) => {
+          evtSource.onmessage = (e) => {
+            if (e.data === endSignal) {
+              evtSource.close();
+              resolve();
+            } else {
+              sseMessages.push(e.data);
+              status.textContent += `\n📜 ${e.data}`;
+            }
+          };
+  
+          evtSource.onerror = (err) => {
+            console.error('SSE error:', err);
+            status.textContent += '\n⚠️ 通信に問題発生。探検を継続できません。';
             evtSource.close();
             resolve();
-          } else {
-            sseMessages.push(e.data);
-            status.textContent += `\n📜 ${e.data}`;
-          }
-        };
-
-        evtSource.onerror = (err) => {
-          console.error('SSE error:', err);
-          status.textContent += '\n⚠️ 通信に問題発生。探検を継続できません。';
-          evtSource.close();
-          resolve();
-        };
-      });
-
-      await waitForSSEEnd;
-
-      try {
-        const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-        const contentType = res.headers.get('content-type');
-
-        if (contentType?.includes('application/json')) {
-          const data = await res.json();
-          if (res.ok && data.rssUrl) {
-            status.innerHTML += `\n✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
-            return;
-          } else {
-            const reason = data?.details || '不明な障害';
-            const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
-            status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`;
-            return;
-          }
-        }
-
-        const xmlText = await res.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, 'application/xml');
-
-        const items = xml.querySelectorAll('item');
-        const entries = xml.querySelectorAll('entry');
-        const allItems = items.length > 0 ? items : entries;
-
-        if (allItems.length > 0) {
-           status.textContent += `\n💡 記録のかけらを発見：${allItems.length}件の記事`;
-        }
-
-        allItems.forEach(item => {
-          const title = item.querySelector('title')?.textContent || '(タイトルなし)';
-          const link = item.querySelector('link')?.textContent || '#';
-          const description = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
-          const enclosure = item.querySelector('enclosure');
-          const imageUrl = enclosure?.getAttribute('url');
-
-          const div = document.createElement('div');
-          div.className = 'item';
-          div.innerHTML = `
-            <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
-            <div class="item-desc">${description}</div>
-            ${imageUrl ? `<img src="${imageUrl}" alt="image" />` : ''}
-          `;
-          feed.appendChild(div);
+          };
         });
-
-      } catch (err) {
-        console.error(err);
-        status.textContent += `\n💥 遺跡の解読に失敗：${err.message}`;
+  
+        await waitForSSEEnd;
+  
+        try {
+          const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+          const contentType = res.headers.get('content-type');
+  
+          if (contentType?.includes('application/json')) {
+            const data = await res.json();
+            if (res.ok && data.rssUrl) {
+              status.innerHTML += `\n✅ 地図の切れ端を発見！<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`;
+              return;
+            } else {
+              const reason = data?.details || '不明な障害';
+              const debug = data?.debug ? `<pre>${JSON.stringify(data.debug, null, 2)}</pre>` : '';
+              status.innerHTML += `\n❌ エラー: ${data?.error || '❌ 探索失敗'}<br>${reason}${debug}`;
+              return;
+            }
+          }
+  
+          const xmlText = await res.text();
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(xmlText, 'application/xml');
+  
+          const items = xml.querySelectorAll('item');
+          const entries = xml.querySelectorAll('entry');
+          const allItems = items.length > 0 ? items : entries;
+  
+          if (allItems.length > 0) {
+             status.textContent += `\n💡 記録のかけらを発見：${allItems.length}件の記事`;
+          }
+  
+          allItems.forEach(item => {
+            const title = item.querySelector('title')?.textContent || '(タイトルなし)';
+            const link = item.querySelector('link')?.textContent || '#';
+            const description = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
+            const enclosure = item.querySelector('enclosure');
+            const imageUrl = enclosure?.getAttribute('url');
+  
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `
+              <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
+              <div class="item-desc">${description}</div>
+              ${imageUrl ? `<img src="${imageUrl}" alt="image" />` : ''}
+            `;
+            feed.appendChild(div);
+          });
+  
+        } catch (err) {
+          console.error(err);
+          status.textContent += `\n💥 遺跡の解読に失敗：${err.message}`;
+        }
       }
-    }
-  </script>
+    </script>
+  </div>
 </body>
 </html>

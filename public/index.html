@@ -265,57 +265,61 @@ moveTimer = setInterval(updateExplorerPosition, 20);
       let pos = { x: 100, y: 100 }
       let target = getRandomPosition()
       
-      function getRandomPosition() {
-  const padding = 20; // 画面端の余白
-  const explorerWidth = 40; // #explorer のCSS幅
-  const bubbleHeight = 80;  // 吹き出し含む高さの想定
+function getRandomPosition() {
+  const containerWidth = 80;
+  const containerHeight = 80;
+  const padding = 10;
 
   return {
-    x: Math.random() * (window.innerWidth - explorerWidth - padding * 2) + padding,
-    y: Math.random() * (window.innerHeight - bubbleHeight - padding * 2) + padding,
+    x: Math.random() * (window.innerWidth - containerWidth - padding * 2) + padding,
+    y: Math.random() * (window.innerHeight - containerHeight - padding * 2) + padding
   };
 }
       
-      function updateExplorerPosition() {
-        const speed = 1.5
-        const dx = target.x - pos.x
-        const dy = target.y - pos.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
-      
-        if (distance < speed) {
-          target = getRandomPosition()
-          return
-        }
-      
-        pos.x += (dx / distance) * speed
-        pos.y += (dy / distance) * speed
-      
-        explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)'
-      
-        explorerContainer.style.left = `${pos.x}px`
-        explorerContainer.style.top = `${pos.y}px`
+function updateExplorerPosition() {
+  const speed = 1.5;
+  const dx = target.x - pos.x;
+  const dy = target.y - pos.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // 🗨 吹き出しを探検家の上に配置（画像の高さ + 少し）
-         const bubble = document.getElementById('speech-bubble');
-        //  bubble.style.top = `${pos.y - bubbleOffset}px`;
-        //  bubble.style.left = `${pos.x}px`;
+  if (distance < speed) {
+    target = getRandomPosition();
+    return;
+  }
 
-        // --- 吹き出し補正 ---
-        requestAnimationFrame(() => {
-          const bubble = speech;
-          const containerRect = explorerContainer.getBoundingClientRect();
-          const bubbleRect = bubble.getBoundingClientRect();
-      
-         // 吹き出しをデフォルトで中央に配置
-           bubble.style.left = '50%';
-           bubble.style.transform = 'translateX(-50%)';
-        
-          // 左にはみ出すなら補正
-          const offsetLeft = containerRect.left + bubble.offsetLeft - bubble.offsetWidth / 2;
-          const offsetRight = containerRect.left + bubble.offsetLeft + bubble.offsetWidth / 2;
-        
-        });
-      }
+  pos.x += (dx / distance) * speed;
+  pos.y += (dy / distance) * speed;
+
+  const container = explorerContainer;
+  const containerWidth = container.offsetWidth || 100;
+  const containerHeight = container.offsetHeight || 100;
+  const margin = 10;
+
+  pos.x = Math.max(margin, Math.min(window.innerWidth - containerWidth - margin, pos.x));
+  pos.y = Math.max(margin, Math.min(window.innerHeight - containerHeight - margin, pos.y));
+
+  explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+  explorerContainer.style.left = `${pos.x}px`;
+  explorerContainer.style.top = `${pos.y}px`;
+
+ requestAnimationFrame(() => {
+  const bubble = speech;
+  const bubbleRect = bubble.getBoundingClientRect();
+  
+  // まず中央揃え（リセット）
+  bubble.style.left = '50%';
+  bubble.style.transform = 'translateX(-50%)';
+
+  // 補正が必要な場合のみ、上書き
+  if (bubbleRect.left < 10) {
+    bubble.style.left = `${bubble.offsetWidth / 2}px`;
+    bubble.style.transform = 'translateX(0)';
+  } else if (bubbleRect.right > window.innerWidth - 10) {
+    bubble.style.left = `calc(100% - ${bubble.offsetWidth / 2}px)`;
+    bubble.style.transform = 'translateX(-100%)';
+  }
+});
+}
       
       setInterval(updateExplorerPosition, 20)
       

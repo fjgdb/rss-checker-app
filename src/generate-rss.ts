@@ -34,21 +34,27 @@ const handler = async (
   req: Request<unknown, unknown, unknown, { url?: string; selector?: string }>,
   res: Response
 ): Promise<void> => {
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
-  res.flushHeaders?.()
-
-  const sendProgress = (msg: string) => {
+   const isSSE = req.headers.accept?.includes('text/event-stream')
+   if (isSSE) {
+     res.setHeader('Content-Type', 'text/event-stream')
+     res.setHeader('Cache-Control', 'no-cache')
+     res.setHeader('Connection', 'keep-alive')
+     res.flushHeaders?.()
+   }
+   const sendProgress = (msg: string) => {
+    res.write(`data: ${msg}\n\n`)
+    if (isSSE) {
     res.write(`data: ${msg}\n\n`)
     if (typeof (res as any).flush === 'function') {
       ;(res as any).flush()
     }
-  }
-
+    } else {
+      console.log('Progress:', msg)
+    } 
+  } 
   const { url, selector } = req.query
   if (typeof url !== 'string') {
-    sendProgress('🧯 URLが見当たらないぞ、隊長！')
+    sendProgress('🧭 探検開始できず！URLが見当たらない！')
     sendProgress('[SSE-END]')
     res.end()
     return
@@ -57,13 +63,13 @@ const handler = async (
   try {
     const parsed = new URL(url)
     if (!['http:', 'https:'].includes(parsed.protocol)) {
-      sendProgress('🧯 通信プロトコルが謎の呪文です')
+      sendProgress('🧭 未知の道だ！URLの形式が怪しい！')
       sendProgress('[SSE-END]')
       res.end()
       return
     }
   } catch {
-    sendProgress('💥 URLの呪文が不完全です…召喚失敗！')
+    sendProgress('💥 URLが壊れている…地図としては使えない！')
     sendProgress('[SSE-END]')
     res.end()
     return
@@ -71,7 +77,7 @@ const handler = async (
 
   const now = Date.now()
   if (recentRequests.has(url) && now - recentRequests.get(url)! < THROTTLE_WINDOW) {
-    sendProgress('🕒 ちょっと待って！ 連打しすぎ注意報！')
+    sendProgress('⏳ 探検隊の再編成中…少し待ってくれ！')
     sendProgress('[SSE-END]')
     res.end()
     return
@@ -80,7 +86,7 @@ const handler = async (
 
   const cached = cache.get(url)
   if (cached && Date.now() < cached.expires) {
-    sendProgress('📦 キャッシュから魔法の巻物を召喚！')
+    sendProgress('📦 古の巻物（キャッシュ）を発見！')
     res.write(`data: ${cached.xml}\n\n`)
     if (typeof (res as any).flush === 'function') {
       ;(res as any).flush()
@@ -94,7 +100,7 @@ const handler = async (
   try {
     const browser = await getBrowser()
     const page = await browser.newPage()
-    sendProgress('🧭 地図の断片を探索中…')
+    sendProgress('🔍 対象エリアをスキャン中…')
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36')
     await page.setExtraHTTPHeaders({
       'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
@@ -105,19 +111,19 @@ const handler = async (
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 })
       html = await page.content()
     } catch (err) {
-      sendProgress(`🧨 探索ルート崩落！代替経路で突入！`)
+      sendProgress(`🧨 メインルートでの進行に失敗！裏道を試行中…`)
       try {
         const response = await axios.get(url)
         html = response.data
       } catch (fallbackErr) {
-        sendProgress(`💥 HTML取得完全失敗: ${fallbackErr}`)
+        sendProgress(`💥 調査失敗: ${fallbackErr}`)
         sendProgress('[SSE-END]')
         res.end()
         return
       }
     }
   } catch (totalErr) {
-    sendProgress(`🌀 魔法陣の召喚に失敗しました…シムたちは困惑中！`)
+    sendProgress(`🌀 探検用装置が召喚に失敗した…撤退せざるを得ない！`)
     sendProgress('[SSE-END]')
     res.end()
     return
@@ -130,7 +136,7 @@ const handler = async (
 
   if (rssLink) {
     const absoluteRss = rssLink.startsWith('http') ? rssLink : new URL(rssLink, url).href
-    sendProgress('📡 既存のRSSフィードを発見！リンクを転送中...')
+    sendProgress('📡 既存の巻物（RSSフィード）を発見！')
 
     try {
       const rssResponse = await fetch(absoluteRss, {
@@ -146,12 +152,12 @@ const handler = async (
       const rssText = await rssResponse.text()
       cache.set(url, { xml: rssText, expires: Date.now() + CACHE_TTL })
 
-      sendProgress(`✅ フィードURL: ${absoluteRss}`)
+      sendProgress(`✅ 巻物URL: ${absoluteRss}`)
       sendProgress('[SSE-END]')
       res.end()
       return
     } catch (err) {
-      sendProgress('⚠️ フィード取得失敗…魔法使いの手で錬成を続行します！')
+      sendProgress('⚠️ RSS巻物の取得に失敗…自らの手で書き起こす！')
     }
   }
 
@@ -164,7 +170,7 @@ const handler = async (
   ]
   const selectors = typeof selector === 'string' ? [selector] : fallbackSelectors
   const itemMap = new Map<string, { title: string, description: string, image?: string }>()
-  sendProgress('🔍 記事を探して草むらをガサゴソ…')
+  sendProgress('🧹 記事の痕跡を調査中…')
 
   for (const sel of selectors) {
     $(sel).each((_, el) => {
@@ -195,7 +201,7 @@ const handler = async (
     return
   }
 
-  sendProgress(`📦 ${itemMap.size}件の記事を収納中...`)
+  sendProgress(`📦 ${itemMap.size}件の情報を回収！手帳に記録中…`)
   const rssItems = Array.from(itemMap.entries()).slice(0, 10).map(([link, data]) => `
     <item>
       <title><![CDATA[${escape(data.title)}]]></title>
@@ -220,9 +226,13 @@ const handler = async (
   const generatedUrl = `${req.protocol}://${req.get('host')}${apiUrl}?url=${encodeURIComponent(url)}`
   cache.set(url, { xml: rss, expires: Date.now() + CACHE_TTL })
 
-  sendProgress(`📜 更新の巻物を発見！ここに眠っていたか…！：${generatedUrl}`)
-  sendProgress('[SSE-END]')
-  res.end()
+  if (isSSE) {
+    sendProgress(`📜 更新の巻物を発見！ここに眠っていたか…！：${generatedUrl}`)
+    sendProgress('[SSE-END]')
+    res.end()
+  } else {
+    res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8')
+    res.send(rss)
+  }
 }
-
 export default handler

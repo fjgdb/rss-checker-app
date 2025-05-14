@@ -133,14 +133,34 @@
       min-height: 100vh;
       text-align: center;
     }
+    
+    #explorer {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      z-index: 9999;
+      pointer-events: none;
+      left: 100px;
+      top: 100px;
+      transition: none; /* 瞬間移動せず滑らか更新に任せる */
+    }
+
+    @keyframes walkCycle {
+      0%   { content: url('/1.png'); }
+      33%  { content: url('/2.png'); }
+      66%  { content: url('/3.png'); }
+      100% { content: url('/1.png'); }
+    }
+
   </style>
 </head>
 <body>
   <div class="blur-overlay"></div>
   <div class="container">
+    <img id="explorer" src="/1.png" alt="探検家" />
     <div class="logo-wrapper">
       <img src="/logo.png" alt="Remus S. Sloane" class="logo-image" />
-      <h1 class="logo-caption">失われた更新を追え！</h1>
+      <!-- <h1 class="logo-caption">失われた更新を追え！</h1> -->
     </div>
     <input id="urlInput" type="text" placeholder="https://example.com" />
     <button onclick="checkRSS()">追跡開始</button>
@@ -148,6 +168,56 @@
     <div id="feed"></div>
   
     <script>
+      //探検家の動き制御
+      const explorer = document.getElementById('explorer')
+      const frames = ['/1.png', '/2.png', '/3.png']
+      let frameIndex = 0
+      
+      // アニメーション（足踏み）
+      setInterval(() => {
+        explorer.src = frames[frameIndex]
+        frameIndex = (frameIndex + 1) % frames.length
+      }, 200)
+      
+      // 初期位置
+      let pos = { x: 100, y: 100 }
+      let target = getRandomPosition()
+      
+      function getRandomPosition() {
+        const padding = 50
+        return {
+          x: Math.random() * (window.innerWidth - padding),
+          y: Math.random() * (window.innerHeight - padding)
+        }
+      }
+      
+      function updateExplorerPosition() {
+        const speed = 1.5 // 小さいほどゆっくり
+        const dx = target.x - pos.x
+        const dy = target.y - pos.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+      
+        // 到着したら次の目的地へ
+        if (distance < speed) {
+          target = getRandomPosition()
+          return
+        }
+      
+        // 方向に向かって少しだけ移動
+        pos.x += (dx / distance) * speed
+        pos.y += (dy / distance) * speed
+      
+        // 移動方向に応じて反転
+        explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)'
+      
+        explorer.style.left = `${pos.x}px`
+        explorer.style.top = `${pos.y}px`
+      }
+      
+      // 毎フレーム位置更新
+      setInterval(updateExplorerPosition, 20)
+    
+      //rssチェッカー
       async function checkRSS() {
         const url = document.getElementById('urlInput').value;
         const status = document.getElementById('status');
@@ -166,7 +236,7 @@
               resolve();
             } else {
               sseMessages.push(e.data);
-              status.textContent += `\n📜 ${e.data}`;
+              status.textContent += `\n ${e.data}`;
             }
           };
   

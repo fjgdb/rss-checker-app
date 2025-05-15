@@ -97,20 +97,21 @@
       align-items: center;
     }
     #explorer {
-      width: 40px;
-      height: 40px;
+      width: 400px;
+      height: 400px;
+      z-index: 9999;
     }
     #explorer.success {
       content: url('/explorer/success.PNG');
+      z-index: 9999;
     }
     #explorer.error {
       content: url('/explorer/error.PNG');
+      z-index: 9999;
     }
     #speech-bubble {
       position: relative;
       bottom: 45px;
-      left: 50%;
-      transform: translateX(-50%);
       background: #fff8dc;
       border: 1px solid #8b5a2b;
       border-radius: 8px;
@@ -203,22 +204,34 @@
     }
 
     function setSpeech(message) {
-      speech.innerHTML = message;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          speech.style.left = '50%';
-          speech.style.transform = 'translateX(-50%)';
-          const bubbleRect = speech.getBoundingClientRect();
-          if (bubbleRect.left < 10) {
-            speech.style.left = `${speech.offsetWidth / 2}px`;
-            speech.style.transform = 'translateX(0)';
-          } else if (bubbleRect.right > window.innerWidth - 10) {
-            speech.style.left = `calc(100% - ${speech.offsetWidth / 2}px)`;
-            speech.style.transform = 'translateX(-100%)';
-          }
-        });
-      });
-    }
+  speech.innerHTML = message;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bubble = speech;
+      const container = explorerContainer;
+      const bubbleRect = bubble.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      const left = containerRect.width / 2 - bubbleRect.width / 2;
+      let newLeft = left;
+
+      // 左にはみ出さないように補正
+      if (containerRect.left + newLeft < 10) {
+        newLeft = 10 - containerRect.left;
+      }
+      // 右にはみ出さないように補正
+      const maxRight = window.innerWidth - 10;
+      if (containerRect.left + newLeft + bubbleRect.width > maxRight) {
+        newLeft = maxRight - containerRect.left - bubbleRect.width;
+      }
+
+      // 左位置に直接指定（transformを外す）
+      bubble.style.left = `${newLeft}px`;
+      bubble.style.transform = 'none';
+    });
+  });
+}
 
     async function checkRSS() {
       const url = document.getElementById('urlInput').value;

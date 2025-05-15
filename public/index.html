@@ -6,16 +6,16 @@
   <title>R.S.S.-配信石板の残骸を追え！-</title>
   <style>
     body {
-      background-image: url('/background.jpg'); /* 画像のパス */
-      background-size: cover;           /* 画面サイズに合わせて拡大縮小 */
-      background-position: center;      /* 中央揃え */
-      background-repeat: no-repeat;     /* 繰り返さない */
+      background-image: url('/background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       margin: 0;
       padding: 0;
-      min-height: 100vh;                /* ビューポート全体の高さを確保 */
+      min-height: 100vh;
       display: flex;
-      align-items: center; /* ← 上下中央 */
-      justify-content: center; /* ← 左右中央 */
+      align-items: center;
+      justify-content: center;
       overflow: hidden;
       position: relative;
     }
@@ -25,23 +25,21 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      min-height: 100vh;
       backdrop-filter: blur(5px);
       z-index: 0;
     }
-    h1.subtitle {
-      font-family: 'Impact', 'Arial Black', sans-serif;
-      font-size: 2rem;
-      color: #fff8dc;
-      text-shadow:
-        -2px -2px 0 #000,
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000;
-      margin-top: -10px; /* ← ここを調整 */
+    .container {
       text-align: center;
+      width: 100%;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
-
     input {
       width: 80%;
       padding: 0.5rem;
@@ -50,22 +48,22 @@
       border: 1px solid #8b5a2b;
     }
     button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      margin-left: 0.5rem;
-      background-color: #8b5a2b;
-      color: white;
+      margin-top: 1rem;
+      background: none;
       border: none;
+      padding: 0;
       cursor: pointer;
     }
-    /* #status { */
-    /*   margin-top: 1rem; */
-    /*   white-space: pre-line; */
-    /*   font-family: 'Courier New', monospace; */
-    /*   background: #f8f4e3; */
-    /*   border: 1px dashed #c0a060; */
-    /*   padding: 0.8rem; */
-    /* } */
+    .logo-wrapper {
+      position: relative;
+      margin-bottom: 2rem;
+      z-index: 1;
+    }
+    .logo-image {
+      display: block;
+      max-width: 600px;
+      width: 100%;
+    }
     #feed {
       margin-top: 2rem;
       border-top: 1px solid #ccc;
@@ -90,86 +88,28 @@
       height: auto;
       margin-top: 0.3rem;
     }
-    .logo-wrapper {
-      position: relative;
-      display: inline-block;
-      margin-bottom: 2rem;
-      z-index: 1;
-    }
-    
-    .logo-image {
-      display: block;
-      position: center; 
-      width: 100%;
-      max-width: 600px;
-    }
-    
-    .logo-caption {
-      position: absolute;
-      bottom: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Noto Sans JP', sans-serif;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #fff;
-      text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
-      white-space: nowrap;
-    }
-    .container {
-      text-align: center;
-      max-width: 100%;
-      width: 100%;
-      padding: 2rem;
-      /* background-color: rgba(255, 255, 255, 0.1); /* 薄い背景が必要なら */ 
-      /* backdrop-filter: blur(2px); /* オプションでぼかし */ 
-      /* border-radius: 1rem;         /* 角を丸く */ 
-      /* box-shadow: 0 0 10px rgba(0,0,0,0.2); */
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      text-align: center;
-    }
-    
-    #explorer {
-      position: absolute;
-      /* width: 40px; */
-      /* height: 40px; */
-      z-index: 9999;
-      pointer-events: none;
-      /* left: 100px; */
-      /* top: 100px; */
-      transition: none; /* 瞬間移動せず滑らか更新に任せる */
-    }
 
-    @keyframes walkCycle {
-      0%   { content: url('/explorer/1.PNG'); }
-      33%  { content: url('/explorer/2.PNG'); }
-      66%  { content: url('/explorer/3.PNG'); }
-      100% { content: url('/explorer/1.PNG'); }
-    }
     #explorer-container {
       position: absolute;
       z-index: 9999;
       pointer-events: none;
       display: flex;
       flex-direction: column;
-      align-items: center; /* ← 水平方向中央揃え */
+      align-items: center;
     }
-    
     #explorer {
       width: 40px;
       height: 40px;
     }
-    
+    #explorer.success {
+      content: url('/explorer/success.PNG');
+    }
+    #explorer.error {
+      content: url('/explorer/error.PNG');
+    }
     #speech-bubble {
       position: relative;
-      bottom: 45px; 
-      /* left: 50%; */
+      bottom: 45px;
       transform: translateX(-50%);
       background: #fff8dc;
       border: 1px solid #8b5a2b;
@@ -180,46 +120,31 @@
       min-width: 100px;
       max-width: 600px;
       white-space: pre-line;
-      z-index: 1;  
+      z-index: 1;
     }
     #speech-bubble::after {
       content: "";
       position: absolute;
-      bottom: -10px; /* 三角形の位置 */
+      bottom: -10px;
       left: 50%;
       transform: translateX(-50%);
-      width: 0;
-      height: 0;
       border-left: 10px solid transparent;
       border-right: 10px solid transparent;
-      border-top: 10px solid #fff8dc; /* 吹き出しの背景色と同じ */
-    
-      /* 下に擬似要素で枠線つき三角形をかぶせる */
+      border-top: 10px solid #fff8dc;
       z-index: 1;
     }
-    
     #speech-bubble::before {
       content: "";
       position: absolute;
-      bottom: -11px; /* ::afterより1px下 */
+      bottom: -11px;
       left: 50%;
       transform: translateX(-50%);
-      width: 0;
-      height: 0;
       border-left: 11px solid transparent;
       border-right: 11px solid transparent;
-      border-top: 11px solid #8b5a2b; /* 枠線の色（本体と同じ） */
+      border-top: 11px solid #8b5a2b;
       z-index: 0;
-    } 
-    /* 既存の explorer に上書えさせる画像切り替えクラス */
-    #explorer.success {
-      content: url('/explorer/success.PNG');
     }
-    #explorer.error {
-      content: url('/explorer/error.PNG');
-    }
-
-</style>
+  </style>
 </head>
 <body>
   <div id="explorer-container">
@@ -227,250 +152,171 @@
     <div id="speech-bubble">🧭 情報の地図を開いています...</div>
   </div>
   <div class="blur-overlay"></div>
-  <div class="container">    
+  <div class="container">
     <div class="logo-wrapper">
       <img src="/logo.png" alt="Remus S. Sloane" class="logo-image" />
-      <!-- <h1 class="logo-caption">失われた更新を追え！</h1> -->
     </div>
     <input id="urlInput" type="text" placeholder="https://example.com" />
-    <button id="trackBtn" onclick="checkRSS()" style="background: none; border: none; padding: 0; cursor: pointer;">
-  <img src="/start.png" alt="調査開始" style="width: 200px; height: auto;" />
-</button>
-    <!-- <div id="status">🧭 情報の地図を開いています...</div> -->
+    <button id="trackBtn" onclick="checkRSS()">
+      <img src="/start.png" alt="調査開始" style="width: 200px;" />
+    </button>
     <div id="feed"></div>
-  
-    <script>
-      //探検家の動き制御
-      // 最初の方で追記
-let walkAnimationTimer;
-let moveTimer;
-      // アニメーション開始のところを変更
-walkAnimationTimer = setInterval(() => {
-  explorer.src = frames[frameIndex];
-  frameIndex = (frameIndex + 1) % frames.length;
-}, 200);
+  </div>
 
-moveTimer = setInterval(updateExplorerPosition, 20);
-      const explorer = document.getElementById('explorer')
-      const explorerContainer = document.getElementById('explorer-container')
-      const speech = document.getElementById('speech-bubble')
-      
-      const frames = ['/explorer/1.PNG', '/explorer/2.PNG', '/explorer/3.PNG']
-      let frameIndex = 0
-      setInterval(() => {
-        explorer.src = frames[frameIndex]
-        frameIndex = (frameIndex + 1) % frames.length
-      }, 200)
-      
-      let pos = { x: 100, y: 100 }
-      let target = getRandomPosition()
-      
-function getRandomPosition() {
-  const containerWidth = 80;
-  const containerHeight = 80;
-  const padding = 10;
+  <script>
+    const explorer = document.getElementById('explorer');
+    const explorerContainer = document.getElementById('explorer-container');
+    const speech = document.getElementById('speech-bubble');
+    const frames = ['/explorer/1.PNG', '/explorer/2.PNG', '/explorer/3.PNG'];
+    let frameIndex = 0;
 
-  return {
-    x: Math.random() * (window.innerWidth - containerWidth - padding * 2) + padding,
-    y: Math.random() * (window.innerHeight - containerHeight - padding * 2) + padding
-  };
-}
-      
-function updateExplorerPosition() {
-  const speed = 1.5;
-  const dx = target.x - pos.x;
-  const dy = target.y - pos.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
+    let pos = { x: 100, y: 100 };
+    let target = getRandomPosition();
 
-  if (distance < speed) {
-    target = getRandomPosition();
-    return;
-  }
+    let walkAnimationTimer = setInterval(() => {
+      explorer.src = frames[frameIndex];
+      frameIndex = (frameIndex + 1) % frames.length;
+    }, 200);
+    let moveTimer = setInterval(updateExplorerPosition, 20);
 
-  pos.x += (dx / distance) * speed;
-  pos.y += (dy / distance) * speed;
+    function getRandomPosition() {
+      const containerSize = 80;
+      const padding = 10;
+      return {
+        x: Math.random() * (window.innerWidth - containerSize - padding * 2) + padding,
+        y: Math.random() * (window.innerHeight - containerSize - padding * 2) + padding
+      };
+    }
 
-  const container = explorerContainer;
-  const containerWidth = container.offsetWidth || 100;
-  const containerHeight = container.offsetHeight || 100;
-  const margin = 10;
+    function updateExplorerPosition() {
+      const speed = 1.5;
+      const dx = target.x - pos.x;
+      const dy = target.y - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
 
-  pos.x = Math.max(margin, Math.min(window.innerWidth - containerWidth - margin, pos.x));
-  pos.y = Math.max(margin, Math.min(window.innerHeight - containerHeight - margin, pos.y));
-
-  explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
-  explorerContainer.style.left = `${pos.x}px`;
-  explorerContainer.style.top = `${pos.y}px`;
-
- requestAnimationFrame(() => {
-  const bubble = speech;
-  const bubbleRect = bubble.getBoundingClientRect();
-  
-  // まず中央揃え（リセット）
-  bubble.style.left = '50%';
-  bubble.style.transform = 'translateX(-50%)';
-
-  // 補正が必要な場合のみ、上書き
-  if (bubbleRect.left < 10) {
-    bubble.style.left = `${bubble.offsetWidth / 2}px`;
-    bubble.style.transform = 'translateX(0)';
-  } else if (bubbleRect.right > window.innerWidth - 10) {
-    bubble.style.left = `calc(100% - ${bubble.offsetWidth / 2}px)`;
-    bubble.style.transform = 'translateX(-100%)';
-  }
-});
-}
-      
-function setSpeech(message) {
-  // 内容を更新する前に仮に非表示にして、位置調整を穏やかにする
-  speech.style.visibility = 'hidden';
-
-  // 内容更新
-  speech.innerHTML = message;
-
-  // 2フレーム後に位置＆表示復元
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const bubbleRect = speech.getBoundingClientRect();
-      const windowWidth = window.innerWidth;
-
-      // 初期中央揃え
-      speech.style.left = '50%';
-      speech.style.transform = 'translateX(-50%)';
-
-      // 左にはみ出すなら補正
-      if (bubbleRect.left < 10) {
-        speech.style.left = `${speech.offsetWidth / 2}px`;
-        speech.style.transform = 'translateX(0)';
-      }
-      // 右にはみ出すなら補正
-      else if (bubbleRect.right > windowWidth - 10) {
-        speech.style.left = `calc(100% - ${speech.offsetWidth / 2}px)`;
-        speech.style.transform = 'translateX(-100%)';
+      if (dist < speed) {
+        target = getRandomPosition();
+        return;
       }
 
-      // 最後に表示
-      speech.style.visibility = 'visible';
-    });
-  });
-}
-      
-      //rssチェッカー
-      async function checkRSS() {
-        const url = document.getElementById('urlInput').value;
-        const status = document.getElementById('status');
-        const feed = document.getElementById('feed');
-        setSpeech('🧭 探索を開始...')
-        feed.innerHTML = '';
-  
-        const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-        const endSignal = '[SSE-END]';
-        const sseMessages = [];
-  
-        const waitForSSEEnd = new Promise((resolve, reject) => {
-  evtSource.onmessage = (e) => {
-    if (e.data === '[SSE-END]') {
-      evtSource.close();
-      resolve();
-    } else {
+      pos.x += (dx / dist) * speed;
+      pos.y += (dy / dist) * speed;
+
+      explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      explorerContainer.style.left = `${pos.x}px`;
+      explorerContainer.style.top = `${pos.y}px`;
+    }
+
+    function setSpeech(message) {
+      speech.innerHTML = message;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          speech.style.left = '50%';
+          speech.style.transform = 'translateX(-50%)';
+
+          const bubbleRect = speech.getBoundingClientRect();
+          if (bubbleRect.left < 10) {
+            speech.style.left = `${speech.offsetWidth / 2}px`;
+            speech.style.transform = 'translateX(0)';
+          } else if (bubbleRect.right > window.innerWidth - 10) {
+            speech.style.left = `calc(100% - ${speech.offsetWidth / 2}px)`;
+            speech.style.transform = 'translateX(-100%)';
+          }
+        });
+      });
+    }
+
+    async function checkRSS() {
+      const url = document.getElementById('urlInput').value;
+      const feed = document.getElementById('feed');
+      feed.innerHTML = '';
+      setSpeech('🧭 探索を開始...');
+
+      const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+
+      const waitForSSEEnd = new Promise((resolve) => {
+        evtSource.onmessage = (e) => {
+          if (e.data === '[SSE-END]') {
+            evtSource.close();
+            resolve();
+          } else {
+            try {
+              const parsed = JSON.parse(e.data);
+              if (parsed.status === 'success') {
+                lockExplorerToButton('success', `✅ 巻物を発見！<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`);
+              }
+            } catch {
+              setSpeech(e.data);
+            }
+          }
+        };
+        evtSource.onerror = () => {
+          setSpeech('⚠️ 通信に問題発生。探検を継続できません。');
+          evtSource.close();
+          resolve();
+        };
+      });
+
+      await waitForSSEEnd;
+
       try {
-        const parsed = JSON.parse(e.data);
-        if (parsed.status === 'success') {
-          lockExplorerToButton('success', `✅ 巻物を発見！<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`);
+        const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
+        const contentType = res.headers.get('content-type');
+
+        if (contentType?.includes('application/json')) {
+          const data = await res.json();
+          if (data.status === 'success') {
+            lockExplorerToButton('success', `📜 更新の巻物を発見！ここに眠っていたか…！：<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`);
+          } else {
+            lockExplorerToButton('error', `❌ エラー: ${data.message || '探索失敗'}`);
+          }
         }
-      } catch {
-        setSpeech(e.data); // 普通のSims4風メッセージ
+
+        const xmlText = await res.text();
+        const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
+        const items = xml.querySelectorAll('item, entry');
+        if (items.length > 0) {
+          setSpeech(`💡 記録のかけらを発見：${items.length}件の記事`);
+        }
+
+        items.forEach(item => {
+          const title = item.querySelector('title')?.textContent || '(タイトルなし)';
+          const link = item.querySelector('link')?.textContent || '#';
+          const desc = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
+          const img = item.querySelector('enclosure')?.getAttribute('url');
+
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
+            <div class="item-desc">${desc}</div>
+            ${img ? `<img src="${img}" alt="image" />` : ''}
+          `;
+          feed.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+        lockExplorerToButton('error', `💥 遺跡の解読に失敗：${err.message}`);
       }
     }
-  };
 
-  evtSource.onerror = (err) => {
-    console.error('SSE error:', err);
-    setSpeech('⚠️ 通信に問題発生。探検を継続できません。');
-    evtSource.close();
-    resolve();
-  };
-});
-  
-        await waitForSSEEnd;
-  
-        try {
-          const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-          const contentType = res.headers.get('content-type');
-  
-          if (contentType?.includes('application/json')) {
-            const data = await res.json();
-            if (data.status === "success") {
-              lockExplorerToButton("success", `📜 更新の巻物を発見！ここに眠っていたか…！：<br><a href="${data.rssUrl}" target="_blank">${data.rssUrl}</a>`);
-            } else {
-              lockExplorerToButton("error", `❌ エラー:  ${data.message || "探索失敗"}`);
-            } 
-          }
-  
-          const xmlText = await res.text();
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(xmlText, 'application/xml');
-  
-          const items = xml.querySelectorAll('item');
-          const entries = xml.querySelectorAll('entry');
-          const allItems = items.length > 0 ? items : entries;
-  
-          if (allItems.length > 0) {
-             setSpeech(`💡 記録のかけらを発見：${allItems.length}件の記事`)
-          }
-  
-          allItems.forEach(item => {
-            const title = item.querySelector('title')?.textContent || '(タイトルなし)';
-            const link = item.querySelector('link')?.textContent || '#';
-            const description = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
-            const enclosure = item.querySelector('enclosure');
-            const imageUrl = enclosure?.getAttribute('url');
-  
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `
-              <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
-              <div class="item-desc">${description}</div>
-              ${imageUrl ? `<img src="${imageUrl}" alt="image" />` : ''}
-            `;
-            feed.appendChild(div);
-          });
-  
-        } catch (err) {
-          console.error(err);
-          lockExplorerToButton("error", `💥 遺跡の解読に失敗：${err.message}`);
-        }
-      }
-      function lockExplorerToButton(state, message) {
-        const btn = document.getElementById("trackBtn");
-        const rect = btn.getBoundingClientRect();
-        const container = document.getElementById("explorer-container");
-      
-        // ボタンの真下に配置
-        const top = rect.bottom + window.scrollY + 10;
-        const left = rect.left + rect.width / 2;
-      
-        container.style.position = "absolute";
-        container.style.top = `${top}px`;
-        container.style.left = `${left}px`;
-        container.style.transform = "translateX(-50%)";
-      
-        // アニメーション停止
-        clearInterval(walkAnimationTimer); // フレーム切り替え止める（必要に応じて）
-        clearInterval(moveTimer);          // 歩行移動も止める
-      
-        // 状態に応じて画像変更
-        explorer.classList.remove("success", "error");
-        if (state === "success") {
-          explorer.classList.add("success");
-        } else if (state === "error") {
-          explorer.classList.add("error");
-        }
-      
-        setSpeech(message);
-      }
+    function lockExplorerToButton(state, message) {
+      const btn = document.getElementById('trackBtn');
+      const rect = btn.getBoundingClientRect();
 
-    </script>
-  </div>
+      explorerContainer.style.top = `${rect.bottom + window.scrollY + 10}px`;
+      explorerContainer.style.left = `${rect.left + rect.width / 2}px`;
+      explorerContainer.style.transform = 'translateX(-50%)';
+
+      clearInterval(walkAnimationTimer);
+      clearInterval(moveTimer);
+
+      explorer.classList.remove('success', 'error');
+      if (state === 'success') explorer.classList.add('success');
+      if (state === 'error') explorer.classList.add('error');
+
+      setSpeech(message);
+    }
+  </script>
 </body>
 </html>

@@ -322,28 +322,35 @@ function updateExplorerPosition() {
 }
       
 function setSpeech(message) {
-  // 内容を更新する前に位置を初期化（ズレを防ぐ）
-  speech.style.left = '50%';
-  speech.style.transform = 'translateX(-50%)';
-  
-  // 内容を更新
+  // 内容を更新する前に仮に非表示にして、位置調整を穏やかにする
+  speech.style.visibility = 'hidden';
+
+  // 内容更新
   speech.innerHTML = message;
 
+  // 2フレーム後に位置＆表示復元
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const bubbleRect = speech.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
 
+      // 初期中央揃え
+      speech.style.left = '50%';
+      speech.style.transform = 'translateX(-50%)';
+
+      // 左にはみ出すなら補正
       if (bubbleRect.left < 10) {
         speech.style.left = `${speech.offsetWidth / 2}px`;
         speech.style.transform = 'translateX(0)';
-      } else if (bubbleRect.right > window.innerWidth - 10) {
+      }
+      // 右にはみ出すなら補正
+      else if (bubbleRect.right > windowWidth - 10) {
         speech.style.left = `calc(100% - ${speech.offsetWidth / 2}px)`;
         speech.style.transform = 'translateX(-100%)';
-      } else {
-        // 中央揃えのままでOK
-        speech.style.left = '50%';
-        speech.style.transform = 'translateX(-50%)';
       }
+
+      // 最後に表示
+      speech.style.visibility = 'visible';
     });
   });
 }

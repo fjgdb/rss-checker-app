@@ -102,11 +102,19 @@
       z-index: 9999;
     }
     #explorer.success {
+<<<<<<< HEAD
       content: url('/explorer/success.PNG');
       z-index: 9999;
     }
     #explorer.error {
       content: url('/explorer/error.PNG');
+=======
+      content: url('/explorer/success.png');
+      z-index: 9999;
+    }
+    #explorer.error {
+      content: url('/explorer/error.png');
+>>>>>>> 726d7cb (色々変えた)
       z-index: 9999;
     }
     #speech-bubble {
@@ -118,10 +126,14 @@
       padding: 0.5rem;
       font-family: 'Courier New', monospace;
       font-size: 0.85rem;
-      min-width: 100px;
+      min-width: 300px;
       max-width: 600px;
       white-space: pre-line;
       z-index: 1;
+<<<<<<< HEAD
+=======
+      margin-bottom: 15px
+>>>>>>> 726d7cb (色々変えた)
     }
     #speech-bubble::after {
       content: "";
@@ -149,7 +161,11 @@
 </head>
 <body>
   <div id="explorer-container">
+<<<<<<< HEAD
     <img id="explorer" src="/explorer/1.PNG" alt="探検家" />
+=======
+    <img id="explorer" src="/explorer/1.png" alt="探検家" />
+>>>>>>> 726d7cb (色々変えた)
     <div id="speech-bubble">🧭 情報の地図を開いています...</div>
   </div>
   <div class="blur-overlay"></div>
@@ -163,6 +179,7 @@
     </button>
     <div id="feed"></div>
   </div>
+<<<<<<< HEAD
 
   <script>
     const explorer = document.getElementById('explorer');
@@ -232,6 +249,87 @@
     });
   });
 }
+=======
+
+  <script>
+    const explorer = document.getElementById('explorer');
+    const explorerContainer = document.getElementById('explorer-container');
+    const speech = document.getElementById('speech-bubble');
+    const frames = ['/explorer/1.png', '/explorer/2.png', '/explorer/3.png'];
+    let frameIndex = 0;
+    let pos = { x: 100, y: 100 };
+    let target = getRandomPosition();
+
+    let walkAnimationTimer = setInterval(() => {
+        const img = new Image();
+      img.onload = () => {
+        explorer.src = img.src;
+      };
+      img.src = frames[frameIndex];
+      frameIndex = (frameIndex + 1) % frames.length;
+    }, 200);
+    
+    let moveTimer = setInterval(updateExplorerPosition, 20);
+
+    function getRandomPosition() {
+      const containerWidth = 80;
+      const containerHeight = 80;
+      const padding = 10;
+      return {
+        x: Math.random() * (window.innerWidth - containerWidth - padding * 2) + padding,
+        y: Math.random() * (window.innerHeight - containerHeight - padding * 2) + padding
+      };
+    }
+
+    function updateExplorerPosition() {
+      const speed = 1.5;
+      const dx = target.x - pos.x;
+      const dy = target.y - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < speed) {
+        target = getRandomPosition();
+        return;
+      }
+      pos.x += (dx / dist) * speed;
+      pos.y += (dy / dist) * speed;
+      explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      explorerContainer.style.left = `${pos.x}px`;
+      explorerContainer.style.top = `${pos.y}px`;
+
+      bubble.style.left = '50%';
+      bubble.style.transform = 'translateX(-50%)';
+    }
+
+    function setSpeech(message) {
+      speech.innerHTML = message;
+    
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const bubble = speech;
+          const container = explorerContainer;
+          const bubbleRect = bubble.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+    
+          const left = containerRect.width / 2 - bubbleRect.width / 2;
+          let newLeft = left;
+    
+          // 左にはみ出さないように補正
+          if (containerRect.left + newLeft < 10) {
+            newLeft = 10 - containerRect.left;
+          }
+          // 右にはみ出さないように補正
+          const maxRight = window.innerWidth - 10;
+          if (containerRect.left + newLeft + bubbleRect.width > maxRight) {
+            newLeft = maxRight - containerRect.left - bubbleRect.width;
+          }
+    
+          // 左位置に直接指定（transformを外す）
+          bubble.style.left = `${newLeft}px`;
+          bubble.style.transform = 'none';
+        });
+      });
+    }
+>>>>>>> 726d7cb (色々変えた)
 
     async function checkRSS() {
       const url = document.getElementById('urlInput').value;

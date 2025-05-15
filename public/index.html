@@ -88,7 +88,6 @@
       height: auto;
       margin-top: 0.3rem;
     }
-
     #explorer-container {
       position: absolute;
       z-index: 9999;
@@ -110,6 +109,7 @@
     #speech-bubble {
       position: relative;
       bottom: 45px;
+      left: 50%;
       transform: translateX(-50%);
       background: #fff8dc;
       border: 1px solid #8b5a2b;
@@ -169,7 +169,6 @@
     const speech = document.getElementById('speech-bubble');
     const frames = ['/explorer/1.PNG', '/explorer/2.PNG', '/explorer/3.PNG'];
     let frameIndex = 0;
-
     let pos = { x: 100, y: 100 };
     let target = getRandomPosition();
 
@@ -180,11 +179,10 @@
     let moveTimer = setInterval(updateExplorerPosition, 20);
 
     function getRandomPosition() {
-      const containerSize = 80;
-      const padding = 10;
+      const size = 80, pad = 10;
       return {
-        x: Math.random() * (window.innerWidth - containerSize - padding * 2) + padding,
-        y: Math.random() * (window.innerHeight - containerSize - padding * 2) + padding
+        x: Math.random() * (window.innerWidth - size - pad * 2) + pad,
+        y: Math.random() * (window.innerHeight - size - pad * 2) + pad
       };
     }
 
@@ -193,15 +191,12 @@
       const dx = target.x - pos.x;
       const dy = target.y - pos.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-
       if (dist < speed) {
         target = getRandomPosition();
         return;
       }
-
       pos.x += (dx / dist) * speed;
       pos.y += (dy / dist) * speed;
-
       explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       explorerContainer.style.left = `${pos.x}px`;
       explorerContainer.style.top = `${pos.y}px`;
@@ -213,7 +208,6 @@
         requestAnimationFrame(() => {
           speech.style.left = '50%';
           speech.style.transform = 'translateX(-50%)';
-
           const bubbleRect = speech.getBoundingClientRect();
           if (bubbleRect.left < 10) {
             speech.style.left = `${speech.offsetWidth / 2}px`;
@@ -284,7 +278,6 @@
           const link = item.querySelector('link')?.textContent || '#';
           const desc = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
           const img = item.querySelector('enclosure')?.getAttribute('url');
-
           const div = document.createElement('div');
           div.className = 'item';
           div.innerHTML = `
@@ -303,18 +296,14 @@
     function lockExplorerToButton(state, message) {
       const btn = document.getElementById('trackBtn');
       const rect = btn.getBoundingClientRect();
-
       explorerContainer.style.top = `${rect.bottom + window.scrollY + 10}px`;
       explorerContainer.style.left = `${rect.left + rect.width / 2}px`;
       explorerContainer.style.transform = 'translateX(-50%)';
-
       clearInterval(walkAnimationTimer);
       clearInterval(moveTimer);
-
       explorer.classList.remove('success', 'error');
       if (state === 'success') explorer.classList.add('success');
       if (state === 'error') explorer.classList.add('error');
-
       setSpeech(message);
     }
   </script>

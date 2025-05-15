@@ -321,11 +321,31 @@ function updateExplorerPosition() {
 });
 }
       
-      setInterval(updateExplorerPosition, 20)
-      
       // ステータスメッセージを吹き出しに表示
 function setSpeech(message) {
   speech.innerHTML = message;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bubble = speech;
+      const bubbleRect = bubble.getBoundingClientRect();
+
+      // 初期中央揃え
+      bubble.style.left = '50%';
+      bubble.style.transform = 'translateX(-50%)';
+
+      // 左にはみ出してる場合
+      if (bubbleRect.left < 10) {
+        bubble.style.left = `${bubble.offsetWidth / 2}px`;
+        bubble.style.transform = 'translateX(0)';
+      }
+      // 右にはみ出してる場合
+      else if (bubbleRect.right > window.innerWidth - 10) {
+        bubble.style.left = `calc(100% - ${bubble.offsetWidth / 2}px)`;
+        bubble.style.transform = 'translateX(-100%)';
+      }
+    });
+  });
 }
       
       //rssチェッカー

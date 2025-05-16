@@ -94,12 +94,19 @@ const handler = async (
   const cached = cache.get(url)
   if (cached && Date.now() < cached.expires) {
     sendProgress('📦 古の巻物（キャッシュ）を発見！')
-    res.write(`data: ${cached.xml}\n\n`)
-    if (typeof (res as any).flush === 'function') {
-      ;(res as any).flush()
+  
+    if (isSSE) {
+      const payload = JSON.stringify({
+        status: "success",
+        rssUrl: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+      })
+      res.write(`data: ${payload}\n\n`)
+      sendProgress('[SSE-END]')
+      res.end()
+    } else {
+      res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8')
+      res.send(cached.xml)
     }
-    sendProgress('[SSE-END]')
-    res.end()
     return
   }
 

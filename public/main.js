@@ -1,16 +1,14 @@
-// /public/main.js（修正版）
-
 const explorer = document.getElementById('explorer');
 const explorerContainer = document.getElementById('explorer-container');
 const speech = document.getElementById('speech-bubble');
 const feed = document.getElementById('feed');
 const frames = ['/explorer/1.png', '/explorer/2.png', '/explorer/3.png'];
 const swingFrames = [
-  '/explorer/swing1.png',
-  '/explorer/swing2.png',
-  '/explorer/swing3.png',
-  '/explorer/swing4.png',
-  '/explorer/swing5.png',
+  '/explorer/swing-1.png',
+  '/explorer/swing-2.png',
+  '/explorer/swing-3.png',
+  '/explorer/swing-4.png',
+  '/explorer/swing-5.png',
 ];
 
 let frameIndex = 0;
@@ -32,7 +30,7 @@ function getRandomPosition() {
 
 function updateExplorerPosition() {
   if (isLocked) return;
-  const speed = 0.5;
+  const speed = 1.0;
   const dx = target.x - pos.x;
   const dy = target.y - pos.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -55,9 +53,12 @@ function updateSpeechBubblePosition() {
       const containerRect = explorerContainer.getBoundingClientRect();
       let newLeft = containerRect.width / 2 - bubbleRect.width / 2;
 
+      // 左端制限
       if (containerRect.left + newLeft < 10) {
         newLeft = 10 - containerRect.left;
       }
+
+      // 右端制限
       const maxRight = window.innerWidth - 10;
       if (containerRect.left + newLeft + bubbleRect.width > maxRight) {
         newLeft = maxRight - containerRect.left - bubbleRect.width;
@@ -75,8 +76,10 @@ function setSpeech(message) {
 }
 
 function startWalkAnimation() {
-  frameIndex = 0;
+  stopExplorer();
+  isLocked = false;
   explorer.style.display = 'block';
+  frameIndex = 0;
   walkTimer = setInterval(() => {
     explorer.src = frames[frameIndex];
     frameIndex = (frameIndex + 1) % frames.length;
@@ -126,8 +129,12 @@ function checkRSS() {
     try {
       const parsed = JSON.parse(e.data);
       if (parsed.status === 'success') {
-        lockExplorerToButton('success', `✅ RSSフィード発見：<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`, '/explorer/success.png');
         evtSource.close();
+        lockExplorerToButton(
+          'success',
+          `✅ RSSフィード発見：<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`,
+          '/explorer/success.png'
+        );
       }
     } catch {
       setSpeech(e.data);
@@ -136,24 +143,28 @@ function checkRSS() {
 
   evtSource.onerror = () => {
     evtSource.close();
-    lockExplorerToButton('error', '⚠️ 通信に問題発生。探検を継続できません。', '/explorer/error.png');
+    lockExplorerToButton(
+      'error',
+      '⚠️ 通信に問題発生。探検を継続できません。',
+      '/explorer/error.png'
+    );
   };
 }
 
 document.getElementById('trackBtn').addEventListener('click', checkRSS);
 
+// 🎠 スイングアニメ（5秒ごと、10%の確率）
 setInterval(() => {
   if (!isLocked && Math.random() < 0.1) {
     clearInterval(walkTimer);
     let i = 0;
     const swing = setInterval(() => {
-      if (!explorer) return;
       explorer.src = swingFrames[i];
       explorer.style.display = 'block';
       i++;
       if (i >= swingFrames.length) {
         clearInterval(swing);
-        startWalkAnimation();
+        if (!isLocked) startWalkAnimation();
       }
     }, 200);
   }

@@ -95,6 +95,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       flex-direction: column-reverse;
     }
     #explorer {
@@ -255,7 +256,7 @@
             try {
               const parsed = JSON.parse(e.data);
               if (parsed.status === 'success') {
-                lockExplorerToButton('success', `✅ 巻物を発見！<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`);
+                lockExplorerToButton('success', `✅ 宝物を発見！<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`);
               }
             } catch {
               setSpeech(e.data);

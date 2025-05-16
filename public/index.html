@@ -103,14 +103,6 @@
       height: 10%;
       z-index: 9999;
     }
-    #explorer.success {
-      content: url('/explorer/success.png');
-      z-index: 9999;
-    }
-    #explorer.error {
-      content: url('/explorer/error.png');
-      z-index: 9999;
-    }
     #speech-bubble {
       position: absolute;
       bottom: 100%;
@@ -335,8 +327,17 @@
       clearInterval(walkAnimationTimer);
       clearInterval(moveTimer);
       explorer.classList.remove('success', 'error');
-      if (state === 'success') explorer.classList.add('success');
-      if (state === 'error') explorer.classList.add('error');
+      
+      if (state === 'success') {
+        explorer.src = '/explorer/success.png';
+      } else if (state === 'error') {
+        explorer.src = '/explorer/error.png';
+      }
+
+      // ❗アニメーションの再開を防ぐ（error時）
+      if (state !== 'error' && state !== 'success') {
+        startWalkAnimation();
+      }
       setSpeech(message);
     }
     

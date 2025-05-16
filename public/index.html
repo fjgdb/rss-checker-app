@@ -177,6 +177,8 @@
     let frameIndex = 0;
     let pos = { x: 100, y: 100 };
     let target = getRandomPosition();
+    let walkAnimationTimer = null;
+    let moveTimer = null;
 
     function getRandomPosition() {
       const containerWidth = 80;
@@ -243,16 +245,14 @@
     
       const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
     
-      let walkTimer, moveTimer;
-    
-      walkTimer = setInterval(() => {
+      walkAnimationTimer = setInterval(() => {
         explorer.src = frames[frameIndex];
         frameIndex = (frameIndex + 1) % frames.length;
       }, 200);
       moveTimer = setInterval(updateExplorerPosition, 20);
     
       const stopExplorer = () => {
-        clearInterval(walkTimer);
+        clearInterval(walkAnimationTimer);
         clearInterval(moveTimer);
       };
     
@@ -369,6 +369,7 @@
         explorer.src = frames[frameIndex];
         frameIndex = (frameIndex + 1) % frames.length;
       }, 200);
+      moveTimer = setInterval(updateExplorerPosition, 20);
     }
     
     // swingアニメーションを再生

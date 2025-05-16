@@ -112,7 +112,8 @@
       z-index: 9999;
     }
     #speech-bubble {
-      position: relative;
+      position: absolute;
+      bottom: 100%;
       background: #fff8dc;
       border: 1px solid #8b5a2b;
       border-radius: 8px;
@@ -154,7 +155,7 @@
 <body>
   <div id="explorer-container">
     <img id="explorer" src="/explorer/1.png" alt="探検家" />
-    <div id="speech-bubble">🧭 情報の地図を開いています...</div>
+    <div id="speech-bubble">🔧 探検の準備中...</div>
   </div>
   <div class="blur-overlay"></div>
   <div class="container">
@@ -176,17 +177,6 @@
     let frameIndex = 0;
     let pos = { x: 100, y: 100 };
     let target = getRandomPosition();
-
-    let walkAnimationTimer = setInterval(() => {
-      const img = new Image();
-      img.onload = () => {
-        explorer.src = img.src;
-      };
-      img.src = frames[frameIndex];
-      frameIndex = (frameIndex + 1) % frames.length;
-    }, 200);
-
-    let moveTimer = setInterval(updateExplorerPosition, 20);
 
     function getRandomPosition() {
       const containerWidth = 80;
@@ -240,24 +230,43 @@
     }
 
     async function checkRSS() {
-      resetExplorer();
-      
+      clearInterval(walkAnimationTimer);
+      clearInterval(moveTimer);
+      explorer.classList.remove('success', 'error');
+      explorer.src = frames[0];
+      frameIndex = 0;
+    
       const url = document.getElementById('urlInput').value;
       const feed = document.getElementById('feed');
       feed.innerHTML = '';
       setSpeech('🧭 探索を開始...');
-
+    
       const evtSource = new EventSource(`/api/generate-rss?url=${encodeURIComponent(url)}`);
-
+    
+      let walkTimer, moveTimer;
+    
+      walkTimer = setInterval(() => {
+        explorer.src = frames[frameIndex];
+        frameIndex = (frameIndex + 1) % frames.length;
+      }, 200);
+      moveTimer = setInterval(updateExplorerPosition, 20);
+    
+      const stopExplorer = () => {
+        clearInterval(walkTimer);
+        clearInterval(moveTimer);
+      };
+    
       const waitForSSEEnd = new Promise((resolve) => {
         evtSource.onmessage = (e) => {
           if (e.data === '[SSE-END]') {
             evtSource.close();
+            stopExplorer();
             resolve();
           } else {
             try {
               const parsed = JSON.parse(e.data);
               if (parsed.status === 'success') {
+                stopExplorer();
                 lockExplorerToButton('success', `✅ 宝物を発見！<br><a href="${parsed.rssUrl}" target="_blank">${parsed.rssUrl}</a>`);
               }
             } catch {
@@ -266,18 +275,20 @@
           }
         };
         evtSource.onerror = () => {
+          stopExplorer();
           lockExplorerToButton('error', '⚠️ 通信に問題発生。探検を継続できません。');
           evtSource.close();
           resolve();
         };
       });
-
+    
       await waitForSSEEnd;
-
+    
+      // あとで追加のフィードが来たらそれ用に出すだけ
       try {
         const res = await fetch(`/api/generate-rss?url=${encodeURIComponent(url)}`);
         const contentType = res.headers.get('content-type');
-
+    
         if (contentType?.includes('application/json')) {
           const data = await res.json();
           if (data.status === 'success') {
@@ -286,34 +297,35 @@
             lockExplorerToButton('error', `❌ エラー: ${data.message || '探索失敗'}`);
           }
         }
-
-        const xmlText = await res.text();
-        const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
-        const items = xml.querySelectorAll('item, entry');
-        if (items.length > 0) {
-          setSpeech(`💡 記録のかけらを発見：${items.length}件の記事`);
-        }
-
-        items.forEach(item => {
-          const title = item.querySelector('title')?.textContent || '(タイトルなし)';
-          const link = item.querySelector('link')?.textContent || '#';
-          const desc = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
-          const img = item.querySelector('enclosure')?.getAttribute('url');
-          const div = document.createElement('div');
-          div.className = 'item';
-          div.innerHTML = `
-            <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
-            <div class="item-desc">${desc}</div>
-            ${img ? `<img src="${img}" alt="image" />` : ''}
-          `;
-          feed.appendChild(div);
-        });
+    
+                const xmlText = await res.text();
+            const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
+            const items = xml.querySelectorAll('item, entry');
+            if (items.length > 0) {
+              setSpeech(`💡 記録のかけらを発見：${items.length}件の記事`);
+            }
+    
+            items.forEach(item => {
+              const title = item.querySelector('title')?.textContent || '(タイトルなし)';
+              const link = item.querySelector('link')?.textContent || '#';
+              const desc = item.querySelector('description')?.textContent || item.querySelector('summary')?.textContent || '';
+              const img = item.querySelector('enclosure')?.getAttribute('url');
+              const div = document.createElement('div');
+              div.className = 'item';
+              div.innerHTML = `
+                <div class="item-title"><a href="${link}" target="_blank" rel="noopener noreferrer">${title}</a></div>
+                <div class="item-desc">${desc}</div>
+                ${img ? `<img src="${img}" alt="image" />` : ''}
+              `;
+              feed.appendChild(div);
+            });
       } catch (err) {
         console.error(err);
         lockExplorerToButton('error', `💥 遺跡の解読に失敗：${err.message}`);
       }
     }
-
+    
+    
     function lockExplorerToButton(state, message) {
       const btn = document.getElementById('trackBtn');
       const rect = btn.getBoundingClientRect();
@@ -327,10 +339,13 @@
       if (state === 'error') explorer.classList.add('error');
       setSpeech(message);
     }
+    
     function resetExplorer() {
       explorer.classList.remove('success', 'error');
       explorer.src = frames[0];
       frameIndex = 0;
+      clearInterval(walkAnimationTimer);
+      clearInterval(moveTimer);
       walkAnimationTimer = setInterval(() => {
         explorer.src = frames[frameIndex];
         frameIndex = (frameIndex + 1) % frames.length;
@@ -338,6 +353,47 @@
       moveTimer = setInterval(updateExplorerPosition, 20);
     }
 
+    // swing用のフレーム定義
+    const swingFrames = [
+      '/explorer/swing1.png',
+      '/explorer/swing2.png',
+      '/explorer/swing3.png',
+      '/explorer/swing4.png',
+      '/explorer/swing5.png',
+    ];
+    
+    // 通常歩行アニメーションを開始する関数（すでに別にもあるけど汎用化）
+    function startWalkAnimation() {
+      frameIndex = 0;
+      walkAnimationTimer = setInterval(() => {
+        explorer.src = frames[frameIndex];
+        frameIndex = (frameIndex + 1) % frames.length;
+      }, 200);
+    }
+    
+    // swingアニメーションを再生
+    function playSwingAnimation() {
+      clearInterval(walkAnimationTimer);
+      let swingIndex = 0;
+    
+      const swingTimer = setInterval(() => {
+        explorer.src = swingFrames[swingIndex];
+        swingIndex++;
+    
+        if (swingIndex >= swingFrames.length) {
+          clearInterval(swingTimer);
+          startWalkAnimation(); // 終わったら歩行アニメに戻す
+        }
+      }, 200);
+    }
+    
+    // たまにswingアニメを挟む（5秒ごとに10%の確率）
+    setInterval(() => {
+      if (Math.random() < 0.1) {
+        playSwingAnimation();
+      }
+    }, 5000);
+
   </script>
-</body>
+ </body>
 </html>

@@ -1,4 +1,4 @@
-// /public/main.js
+// /public/main.js（修正版）
 
 const explorer = document.getElementById('explorer');
 const explorerContainer = document.getElementById('explorer-container');
@@ -45,15 +45,16 @@ function updateExplorerPosition() {
   explorer.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
   explorerContainer.style.left = `${pos.x}px`;
   explorerContainer.style.top = `${pos.y}px`;
+  updateSpeechBubblePosition();
 }
 
-function setSpeech(message) {
-  speech.innerHTML = message;
+function updateSpeechBubblePosition() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const bubbleRect = speech.getBoundingClientRect();
       const containerRect = explorerContainer.getBoundingClientRect();
       let newLeft = containerRect.width / 2 - bubbleRect.width / 2;
+
       if (containerRect.left + newLeft < 10) {
         newLeft = 10 - containerRect.left;
       }
@@ -61,14 +62,21 @@ function setSpeech(message) {
       if (containerRect.left + newLeft + bubbleRect.width > maxRight) {
         newLeft = maxRight - containerRect.left - bubbleRect.width;
       }
+
       speech.style.left = `${newLeft}px`;
       speech.style.transform = 'none';
     });
   });
 }
 
+function setSpeech(message) {
+  speech.innerHTML = message;
+  updateSpeechBubblePosition();
+}
+
 function startWalkAnimation() {
   frameIndex = 0;
+  explorer.style.display = 'block';
   walkTimer = setInterval(() => {
     explorer.src = frames[frameIndex];
     frameIndex = (frameIndex + 1) % frames.length;
@@ -88,6 +96,7 @@ function lockExplorerToButton(state, message, iconPath) {
   const rect = btn.getBoundingClientRect();
   stopExplorer();
   isLocked = true;
+  explorer.style.display = 'block';
   explorer.src = iconPath;
   explorerContainer.style.top = `${rect.bottom + window.scrollY + 10}px`;
   explorerContainer.style.left = `${rect.left + rect.width / 2}px`;
@@ -99,6 +108,7 @@ function checkRSS() {
   stopExplorer();
   isLocked = false;
   explorer.src = frames[0];
+  explorer.style.display = 'block';
   frameIndex = 0;
   feed.innerHTML = '';
   setSpeech('🧭 探索を開始...');
@@ -137,7 +147,9 @@ setInterval(() => {
     clearInterval(walkTimer);
     let i = 0;
     const swing = setInterval(() => {
+      if (!explorer) return;
       explorer.src = swingFrames[i];
+      explorer.style.display = 'block';
       i++;
       if (i >= swingFrames.length) {
         clearInterval(swing);

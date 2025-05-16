@@ -261,7 +261,7 @@
           }
         };
         evtSource.onerror = () => {
-          setSpeech('⚠️ 通信に問題発生。探検を継続できません。');
+          lockExplorerToButton('error', '⚠️ 通信に問題発生。探検を継続できません。');
           evtSource.close();
           resolve();
         };

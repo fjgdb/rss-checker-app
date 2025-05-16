@@ -240,6 +240,8 @@
     }
 
     async function checkRSS() {
+      resetExplorer();
+      
       const url = document.getElementById('urlInput').value;
       const feed = document.getElementById('feed');
       feed.innerHTML = '';
@@ -325,6 +327,17 @@
       if (state === 'error') explorer.classList.add('error');
       setSpeech(message);
     }
+    function resetExplorer() {
+      explorer.classList.remove('success', 'error');
+      explorer.src = frames[0];
+      frameIndex = 0;
+      walkAnimationTimer = setInterval(() => {
+        explorer.src = frames[frameIndex];
+        frameIndex = (frameIndex + 1) % frames.length;
+      }, 200);
+      moveTimer = setInterval(updateExplorerPosition, 20);
+    }
+
   </script>
 </body>
 </html>
